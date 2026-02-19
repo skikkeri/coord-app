@@ -1,7 +1,9 @@
 # Project Context
 
 **Domain:** B2B sales scheduling tool
-**Last updated:** 2026-02-18
+**App name:** Coord
+**Repository:** https://github.com/skikkeri/coord-app
+**Last updated:** 2026-02-21
 
 ---
 
@@ -208,8 +210,6 @@ Use cases are written from the perspective of a specific persona in a real scena
 
 ---
 
----
-
 # MVP Definition
 
 ## Scope
@@ -277,6 +277,744 @@ The MVP covers the three P0 use cases only — the minimum needed for the produc
 | `persona_derek.png` | Derek — VP Sales / Client Buyer persona card (green) | 2026-02-18 |
 | `persona_sophie.png` | Sophie — IT Manager / Late Stakeholder persona card (red) | 2026-02-18 |
 | `wireframes_mvp.html` | Interactive 8-screen wireframe covering all three MVP flows (AE, SE, Buyer) | 2026-02-18 |
+
+---
+
+# Design System
+
+## Salt DS (JPMorgan Chase)
+
+Coord uses **Salt Design System** (`github.com/jpmorganchase/salt-ds`) as its component library. Salt is an open-source, enterprise-grade design system used internally at JPMorgan Chase and released publicly. It was chosen for its:
+
+- Professional, data-dense aesthetic suited to B2B tooling
+- Strong accessibility baseline (WCAG 2.1 AA out of the box)
+- Semantic token system that supports future theming (light/dark, high-contrast)
+- Density modes (`touch`, `low`, `medium`, `high`) — useful when targeting power users
+
+### Packages Installed
+
+| Package | Purpose |
+|---------|---------|
+| `@salt-ds/core` | All stable production components (Button, Text, FormField, Card, Switch, Spinner, Toast, Tooltip, etc.) |
+| `@salt-ds/theme` | CSS design token cascade — foundations → palettes → characteristics |
+| `@salt-ds/icons` | SVG icon components |
+| `@salt-ds/lab` | Release-candidate components (Tabs, DatePicker) |
+| `@fontsource/open-sans` | Body font (weights 300–800) — loaded locally, no CDN dependency |
+| `@fontsource/pt-mono` | Monospace font for code / URLs |
+
+### Provider Setup
+
+Salt requires a `SaltProvider` context wrapper. Because it uses React context it must be a Client Component. The wrapper lives at:
+
+```
+app/components/SaltProvider.tsx   ← 'use client' — wraps the entire app
+app/layout.tsx                    ← imports SaltProvider, wraps children
+```
+
+```tsx
+// app/components/SaltProvider.tsx
+<SaltProvider mode="light" density="medium">
+  {children}
+</SaltProvider>
+```
+
+**Config:**
+- `mode="light"` — light theme (dark mode is a future toggle)
+- `density="medium"` — standard spacing for desktop B2B use
+
+### Key Components in Use
+
+| Salt Component | Where used | Notes |
+|---------------|-----------|-------|
+| `Button` | All CTAs, nav actions | `appearance="solid" sentiment="accented"` for primary CTAs; `"bordered"` for secondary |
+| `Text` | All typography | `styleAs="h4"` etc. for semantic headings without resetting HTML tags |
+| `FormField` + `FormFieldLabel` + `FormFieldHelperText` | Step 1 of booking wizard | Wraps form controls with accessible label + hint pattern |
+| `Switch` | SE notification toggles | Replaces custom checkbox toggles |
+| `Toast` + `ToastContent` | SE availability save confirmation | Positioned fixed top-right |
+| `Spinner` | Calendar connect loading, booking submit | Replaces custom spinner |
+| `Tooltip` | Calendar disconnect button | Hover hint |
+| `Card` (wrapped) | All content panels | Salt `Card` used as base; thin wrapper adds `borderRadius: 12` and `boxShadow` |
+
+### Design Token Usage
+
+Salt's CSS custom properties (`--salt-*`) are inherited throughout. Key ones referenced:
+
+```css
+--salt-typography-fontFamily-openSans   /* body font */
+--salt-typography-fontFamily-ptMono     /* monospace — used for booking URLs */
+--salt-content-primary-foreground       /* primary text colour */
+--salt-container-primary-background     /* card/panel backgrounds */
+--salt-actionable-accented-background   /* CTA button fill (JPM blue) */
+```
+
+### Custom Tokens (Coord Brand Layer)
+
+Coord adds a thin layer of custom CSS variables in `app/globals.css` that sit alongside Salt's tokens:
+
+```css
+--coord-sidebar-bg: #1E2230      /* dark slate sidebar */
+--coord-sidebar-border: #2D3348  /* sidebar dividers */
+--coord-bg: #F0F2F5              /* app canvas background */
+```
+
+The sidebar is intentionally styled outside Salt's light theme using the `.coord-sidebar` class, preserving the dark nav aesthetic while Salt handles all in-content styling.
+
+### Approach for Native Inputs
+
+Salt's `Input` component uses an internal `HTMLDivElement` (contenteditable pattern) rather than `<input>`, which means:
+- `type="email"` / `type="text"` props are not supported
+- `onChange` typing is `ChangeEvent<HTMLDivElement>` not `HTMLInputElement`
+
+**Decision:** For the Buyer booking form and notes field where `type` attributes matter, native `<input>` elements are used, styled to match Salt's visual language (same border, radius, font-family). `FormField` + `FormFieldLabel` wrappers are still used for the label + hint pattern.
+
+---
+
+# Architecture
+
+## Technology Stack
+
+| Layer | Technology | Version | Role |
+|-------|-----------|---------|------|
+| Framework | Next.js | 16.1.6 (Turbopack) | Full-stack React — App Router, SSR, API routes |
+| Language | TypeScript | 5.x | Type safety throughout |
+| Styling | Tailwind CSS v4 + Salt DS tokens | — | Utility classes + design system tokens |
+| Design system | Salt DS (`@salt-ds/core`) | latest | JPMorgan Chase component library |
+| Auth | NextAuth v5 (`next-auth@5.0.0-beta`) | 5.x beta | Google OAuth 2.0, JWT session, server-side auth |
+| Calendar API | Google Calendar API v3 | — | Free/busy queries, event creation, Google Meet |
+| HTTP client | `googleapis` SDK | — | Typed wrapper for Google API calls |
+| Icons | Lucide React | — | Supplementary icons where Salt icons don't cover |
+| State | React `useState` / `useSession` | — | Local component state; no global store yet |
+
+## Repository Structure
+
+```
+coord-app/
+├── app/
+│   ├── layout.tsx                        # Root layout — SaltProvider + SessionProvider
+│   ├── globals.css                       # Tailwind import + Coord brand CSS tokens
+│   ├── page.tsx                          # Root redirect → /dashboard
+│   │
+│   ├── dashboard/
+│   │   ├── layout.tsx                    # AE layout — Sidebar(role="ae") + content wrapper
+│   │   └── page.tsx                      # Screen 1: AE Dashboard (meetings table + stats)
+│   │
+│   ├── book/
+│   │   ├── layout.tsx                    # Booking layout — Sidebar(role="ae")
+│   │   ├── page.tsx                      # Thin page wrapper → BookingFlow
+│   │   └── BookingFlow.tsx               # Screens 2–4: 3-step booking wizard (client component)
+│   │
+│   ├── se/
+│   │   ├── layout.tsx                    # SE layout — Sidebar(role="se")
+│   │   ├── availability/page.tsx         # Screen 5: SE availability grid + booking rules
+│   │   └── demos/page.tsx                # Screen 6: SE upcoming demos list
+│   │
+│   ├── buyer/
+│   │   └── book/[slug]/
+│   │       ├── page.tsx                  # Server wrapper for buyer booking page
+│   │       └── BuyerBookingPage.tsx      # Screens 7–8: Buyer date picker + confirmation
+│   │
+│   ├── api/
+│   │   ├── auth/[...nextauth]/route.ts   # NextAuth v5 catch-all handler
+│   │   ├── calendar/
+│   │   │   ├── busy/route.ts             # GET  /api/calendar/busy
+│   │   │   └── create-event/route.ts     # POST /api/calendar/create-event
+│   │
+│   └── components/
+│       ├── SaltProvider.tsx              # 'use client' — SaltProvider + font imports
+│       ├── SessionProvider.tsx           # 'use client' — NextAuth SessionProvider
+│       ├── Sidebar.tsx                   # Dark nav sidebar (role-aware: AE / SE)
+│       ├── Card.tsx                      # Card / CardHeader / CardTitle / CardBody wrappers
+│       ├── Badge.tsx                     # Status badge (green/amber/blue/gray/red/purple)
+│       └── CalendarConnect.tsx           # Google Calendar OAuth connect/disconnect button
+│
+├── lib/
+│   ├── auth.ts                           # NextAuth config — Google provider, JWT/session callbacks
+│   ├── mock-data.ts                      # Mock meetings, time slots, calendar days
+│   └── types.ts                          # Shared TypeScript interfaces (Meeting, UserRole, etc.)
+│
+├── .env.local                            # Secrets — NOT committed (see env vars section)
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+## Component Hierarchy
+
+```
+RootLayout (app/layout.tsx)
+└── SaltProvider          ← Salt DS context (light / medium)
+    └── SessionProvider   ← NextAuth session context
+        ├── DashboardLayout
+        │   └── Sidebar (role="ae") + DashboardPage
+        ├── BookLayout
+        │   └── Sidebar (role="ae") + BookingFlow
+        ├── SELayout
+        │   └── Sidebar (role="se") + (SEAvailabilityPage | SEDemosPage)
+        └── BuyerBookingPage  ← standalone, no sidebar (public-facing)
+```
+
+## Server vs. Client Components
+
+Next.js App Router defaults to Server Components. Salt DS requires React context (client-side), so the split is:
+
+| File | Type | Reason |
+|------|------|--------|
+| `app/layout.tsx` | Server | Can import Client Components safely |
+| `app/components/SaltProvider.tsx` | **Client** | SaltProvider uses React context |
+| `app/components/SessionProvider.tsx` | **Client** | NextAuth useSession hook |
+| `app/components/Sidebar.tsx` | **Client** | usePathname hook for active nav |
+| `app/components/CalendarConnect.tsx` | **Client** | useSession hook |
+| `app/dashboard/page.tsx` | **Client** | Imports Salt Text/Button (context consumers) |
+| `app/book/BookingFlow.tsx` | **Client** | useState, interactive wizard |
+| `app/se/availability/page.tsx` | **Client** | useState for grid toggle |
+| `app/se/demos/page.tsx` | **Client** | Salt Text/Button (context consumers) |
+| `app/buyer/book/[slug]/BuyerBookingPage.tsx` | **Client** | useState, fetch to API |
+| `app/api/**` | Server (Route Handlers) | Google Calendar API calls, auth check |
+
+**Rule of thumb:** Any file that imports from `@salt-ds/core` needs `'use client'` unless it's only passing through children.
+
+---
+
+# Code Flow
+
+## Flow A — AE Creates a Booking Link
+
+```
+User action: AE clicks "Book a Demo" on Dashboard
+     │
+     ▼
+/book → BookingFlow.tsx (client component)
+     │
+     ├─ STEP 1: AE selects Deal, Meeting Type, Duration, Notes
+     │           └─ All local state (useState)
+     │
+     ├─ STEP 2: AE selects internal attendees (SE required, VP optional)
+     │           └─ Availability grid shown from mockSlots (MVP: mock data)
+     │           └─ Future: GET /api/calendar/busy for each attendee
+     │
+     └─ STEP 3: Booking link generated
+                └─ Link format: coord.app/book/{ae-slug}/{deal-slug}
+                └─ AE copies link → shares via email / Slack / CRM
+```
+
+## Flow B — Buyer Books a Slot (Critical path — wires to Google Calendar)
+
+```
+User action: Buyer opens shared link
+     │
+     ▼
+/buyer/book/[slug] → BuyerBookingPage.tsx
+     │
+     ├─ Buyer selects date (calDays: Feb 23–27)
+     ├─ Buyer selects time slot (buyerSlots)
+     ├─ Buyer enters name / email / company
+     │
+     └─ Buyer clicks "Confirm"
+          │
+          ▼
+     handleConfirm() [async]
+          │
+          ├─ Builds ISO start/end datetimes from selected day + slot
+          │
+          ├─ POST /api/calendar/create-event
+          │    Body: { summary, description, startDateTime, endDateTime, attendees }
+          │
+          ▼
+     /api/calendar/create-event/route.ts [Server — Route Handler]
+          │
+          ├─ auth() ← NextAuth v5 — checks session, reads accessToken from JWT
+          ├─ Validates request body
+          ├─ Instantiates Google OAuth2 client with accessToken
+          │
+          ├─ calendar.events.insert()
+          │    ├─ calendarId: 'primary'
+          │    ├─ sendUpdates: 'all'  ← emails all attendees
+          │    ├─ conferenceData: createRequest (Google Meet auto-created)
+          │    └─ conferenceDataVersion: 1
+          │
+          └─ Returns { eventId, link } → BuyerBookingPage
+               │
+               ▼
+          setConfirmed(true) — shows confirmation UI
+          meetLink displayed → "Open meeting link"
+          Buyer can add colleagues (UI only — no further API call in MVP)
+```
+
+## Flow C — SE Sets Availability
+
+```
+User action: SE navigates to /se/availability
+     │
+     ▼
+SEAvailabilityPage.tsx (client component)
+     │
+     ├─ 8×5 interactive grid (hours × days)
+     │   └─ toggle() flips cell state: 'on' | 'off' | 'blocked'
+     │   └─ 'blocked' = read-only (simulates Google Calendar conflicts)
+     │
+     ├─ Booking Rules dropdowns (min notice, prep buffer, max demos/day)
+     │   └─ MVP: local state only — not persisted to backend yet
+     │
+     ├─ Notification toggles (Salt Switch components)
+     │   └─ MVP: local state only
+     │
+     └─ "Save Changes" → handleSave()
+          └─ setSaved(true) → Toast notification
+          └─ Future: POST /api/se/availability { windows, rules }
+```
+
+## Authentication Flow (Google OAuth via NextAuth v5)
+
+```
+User clicks "Connect Google Calendar" (CalendarConnect.tsx)
+     │
+     ▼
+signIn('google') [next-auth/react client call]
+     │
+     ▼
+POST /api/auth/signin/google  ← NextAuth CSRF-validated signin
+     │
+     ▼
+NextAuth validates trustHost + secret, builds PKCE code_verifier
+     │
+     ▼
+302 → accounts.google.com/o/oauth2/v2/auth
+     └─ response_type=code
+     └─ client_id=GOOGLE_CLIENT_ID
+     └─ redirect_uri=https://coord-app.vercel.app/api/auth/callback/google
+     └─ scope=openid email profile calendar.readonly calendar.events
+     └─ prompt=consent  access_type=offline  (ensures refresh_token returned)
+     └─ code_challenge / code_challenge_method=S256  (PKCE)
+     │
+     ▼
+User approves Google consent screen
+     │
+     ▼
+Google redirects → /api/auth/callback/google?code=AUTH_CODE
+     │
+     ▼
+NextAuth exchanges code for tokens (POST oauth2.googleapis.com/token)
+     └─ client_id + client_secret + code + redirect_uri + code_verifier
+     │
+     ▼
+lib/auth.ts jwt() callback  ← runs on every token creation / refresh
+     └─ Persists account.access_token  → token.accessToken
+     └─ Persists account.refresh_token → token.refreshToken
+     └─ Persists account.expires_at   → token.expiresAt
+     │
+     ▼
+lib/auth.ts session() callback  ← runs on every useSession() / auth() call
+     └─ Exposes token.accessToken as session.accessToken
+     │
+     ▼
+CalendarConnect shows "Google Calendar connected ✓ (user@email.com)"
+     │
+     ▼
+API routes call auth() server-side to get session
+     └─ session.accessToken → instantiates google.auth.OAuth2 client
+     └─ Used in /api/calendar/create-event and /api/calendar/busy
+```
+
+### Critical NextAuth v5 Config Requirements
+
+```ts
+// lib/auth.ts — key settings required for production
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers: [Google({ ... })],
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  trustHost: true,   // ← REQUIRED on any non-localhost host (Vercel, etc.)
+  callbacks: { jwt, session },
+});
+```
+
+**`trustHost: true` is mandatory.** Without it NextAuth v5 beta throws `UntrustedHost` for every request on non-localhost domains, which surfaces as the generic `?error=Configuration` page. This is a known NextAuth v5 beta behaviour — it does not auto-detect Vercel/production environments.
+
+### Token Refresh Flow (Automatic)
+
+Google access tokens expire after ~1 hour. `lib/auth.ts` handles this silently via a `refreshGoogleToken()` helper called inside the `jwt()` callback:
+
+```
+Every useSession() / auth() call → jwt() callback runs
+     │
+     ├─ Is token.expiresAt still in the future (with 60s buffer)?
+     │    YES → return token unchanged
+     │
+     └─ NO (expired) → refreshGoogleToken(token)
+          │
+          ▼
+     POST https://oauth2.googleapis.com/token
+          └─ grant_type=refresh_token
+          └─ refresh_token=token.refreshToken
+          └─ client_id + client_secret
+          │
+          ▼
+     Google returns new access_token + expires_in
+          └─ token.accessToken  ← updated
+          └─ token.expiresAt    ← updated (now + expires_in seconds)
+          └─ token.refreshToken ← updated if Google issued a new one
+          │
+          ▼
+     API routes receive fresh accessToken transparently
+```
+
+**On refresh failure** (user revoked access, refresh token expired):
+- `token.error = 'RefreshAccessTokenError'` is set
+- `session.error` is exposed to the client
+- `CalendarConnect.tsx` detects this and shows "Session expired / Reconnect" UI
+- API routes return `401 Unauthorized` (no change needed — already handled)
+
+---
+
+# API Specifications
+
+## Authentication
+
+All internal API routes require an active NextAuth session. The session carries a Google `accessToken` persisted through the JWT callback. Requests without a valid session receive `401 Unauthorized`.
+
+Auth is checked server-side via:
+```ts
+import { auth as getSession } from '@/lib/auth';
+const session = await getSession();
+if (!session || !(session as any).accessToken) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+```
+
+---
+
+## POST /api/calendar/create-event
+
+Creates a Google Calendar event with Google Meet and sends email invites to all attendees.
+
+**Auth required:** Yes (Google OAuth session with `calendar.events` scope)
+
+**Request**
+```http
+POST /api/calendar/create-event
+Content-Type: application/json
+```
+
+```json
+{
+  "summary": "Technical Demo — NorthStar Ops × Veritas Cloud",
+  "description": "Booked by: Derek Thompson <derek@northstar.com> — NorthStar Ops\n\nAttendees (vendor side):\n• Marcus Chen — Account Executive\n• Priya Sharma — Sales Engineer",
+  "startDateTime": "2026-02-24T14:00:00.000Z",
+  "endDateTime": "2026-02-24T14:45:00.000Z",
+  "attendees": [
+    { "email": "derek@northstar.com" },
+    { "email": "marcus@vendor.com" },
+    { "email": "priya@vendor.com" }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `summary` | string | ✓ | Calendar event title |
+| `description` | string | — | Event body / agenda |
+| `startDateTime` | ISO 8601 string | ✓ | UTC start time |
+| `endDateTime` | ISO 8601 string | ✓ | UTC end time |
+| `attendees` | `{ email: string }[]` | — | All attendees; Google sends calendar invites to each |
+
+**Response — 200 OK**
+```json
+{
+  "eventId": "abc123xyz",
+  "link": "https://calendar.google.com/calendar/event?eid=..."
+}
+```
+
+**Response — 401 Unauthorized**
+```json
+{ "error": "Unauthorized" }
+```
+
+**Response — 400 Bad Request**
+```json
+{ "error": "Missing required fields" }
+```
+
+**Response — 500 Internal Server Error**
+```json
+{ "error": "<Google API error message>" }
+```
+
+**Notes:**
+- `sendUpdates: 'all'` — Google automatically emails every attendee
+- `conferenceData.createRequest` — Google Meet link is auto-generated and embedded in the invite
+- `conferenceDataVersion: 1` must be set alongside `createRequest` or Meet is not created
+- Timezone is hardcoded to `UTC` for MVP; buyer-side timezone conversion is a P1 item
+
+---
+
+## GET /api/calendar/busy
+
+Returns busy time blocks for the currently authenticated user from Google Calendar. Used to filter available slots when building the AE booking link.
+
+**Auth required:** Yes (Google OAuth session with `calendar.readonly` scope)
+
+**Request**
+```http
+GET /api/calendar/busy?timeMin=2026-02-23T00:00:00Z&timeMax=2026-02-27T23:59:59Z
+```
+
+| Query param | Type | Required | Default | Description |
+|------------|------|----------|---------|-------------|
+| `timeMin` | ISO 8601 string | — | `now` | Start of window to check |
+| `timeMax` | ISO 8601 string | — | `now + 7 days` | End of window to check |
+
+**Response — 200 OK**
+```json
+{
+  "busy": [
+    {
+      "start": "2026-02-24T09:00:00Z",
+      "end": "2026-02-24T10:00:00Z"
+    },
+    {
+      "start": "2026-02-25T14:00:00Z",
+      "end": "2026-02-25T15:00:00Z"
+    }
+  ]
+}
+```
+
+**Response — 401 Unauthorized**
+```json
+{ "error": "Unauthorized — connect Google Calendar first" }
+```
+
+**Notes:**
+- Queries `calendarId: 'primary'` only (MVP scope)
+- Uses Google Calendar FreeBusy API (`calendar.freebusy.query`)
+- In MVP the busy endpoint is available but the AE booking wizard uses mock slots — real free/busy integration is a P1 item
+- Multi-attendee free/busy (querying several calendars in one request) is supported by the FreeBusy API and planned for P1
+
+---
+
+## NextAuth Endpoints (managed by NextAuth v5)
+
+These are handled automatically by the catch-all at `app/api/auth/[...nextauth]/route.ts`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/auth/signin` | Renders sign-in page |
+| `GET` | `/api/auth/callback/google` | OAuth callback — exchanges code for tokens |
+| `GET` | `/api/auth/session` | Returns current session (used by `useSession`) |
+| `POST` | `/api/auth/signout` | Clears session cookie |
+| `GET` | `/api/auth/csrf` | CSRF token for form-based sign-in |
+
+---
+
+## Planned API Routes (Post-MVP)
+
+| Method | Path | Description | Priority |
+|--------|------|-------------|---------|
+| `POST` | `/api/se/availability` | Persist SE availability windows + rules | P1 |
+| `GET` | `/api/meetings` | List all meetings for an AE | P1 |
+| `POST` | `/api/meetings` | Create a meeting record | P1 |
+| `PATCH` | `/api/meetings/:id` | Reschedule / update meeting | P1 |
+| `POST` | `/api/meetings/:id/reschedule` | Trigger multi-party reschedule | P1 |
+| `POST` | `/api/briefs` | Generate pre-call brief (SE or stakeholder) | P1 |
+| `POST` | `/api/crm/log` | Log meeting activity to CRM | P2 |
+| `GET` | `/api/analytics/demo-quality` | Aggregate demo quality metrics for RevOps | P3 |
+
+---
+
+# Hosting & Deployment
+
+## Platform: Vercel
+
+Coord is deployed on **Vercel** — the natural hosting target for Next.js apps. Vercel provides:
+
+- Zero-config Next.js support (App Router, Turbopack, API routes all work out of the box)
+- Automatic HTTPS and global CDN
+- Preview deployments on every PR (useful for testing flows with collaborators)
+- Edge network for fast cold starts on API routes
+- Free tier sufficient for MVP testing with a small group
+
+## Deployment Architecture
+
+```
+Browser (AE / SE / Buyer)
+        │
+        │ HTTPS
+        ▼
+  Vercel Edge Network (CDN)
+        │
+        ├─ Static assets (JS bundles, CSS, fonts) → served from CDN cache
+        │
+        └─ Dynamic requests (API routes, SSR pages)
+                │
+                ▼
+         Vercel Serverless Functions
+                │
+                ├─ /api/auth/**              ← NextAuth session management
+                ├─ /api/calendar/busy        ← Google Calendar FreeBusy query
+                └─ /api/calendar/create-event ← Google Calendar event insert
+                        │
+                        ▼
+                 Google Calendar API v3
+                 (OAuth 2.0 — access token from session)
+```
+
+## Live URLs
+
+| Environment | URL |
+|-------------|-----|
+| **Production** | https://coord-app.vercel.app |
+| GitHub repo | https://github.com/skikkeri/coord-app |
+| Vercel dashboard | https://vercel.com/santosh-kikkeris-projects/coord-app |
+| Google Cloud Console | https://console.cloud.google.com (project: coord / SchedulerApp) |
+
+## Environment Variables
+
+All 6 variables must be set in Vercel → Project Settings → Environment Variables, across **Production, Preview, and Development** environments.
+
+| Variable | Description | Format |
+|----------|-------------|--------|
+| `AUTH_SECRET` | NextAuth v5 JWT signing secret | `openssl rand -base64 32` — 44 chars, **no quotes** |
+| `NEXTAUTH_SECRET` | Same value as AUTH_SECRET (v4 compat fallback) | identical to AUTH_SECRET |
+| `AUTH_URL` | Full public URL of the app | `https://coord-app.vercel.app` (no trailing slash) |
+| `NEXTAUTH_URL` | Same as AUTH_URL (v4 compat fallback) | identical to AUTH_URL |
+| `GOOGLE_CLIENT_ID` | OAuth 2.0 Client ID from Google Cloud Console | `366920354304-...apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret from Google Cloud Console | `GOCSPX-...` (35 chars) |
+
+### .env.local rules (local dev)
+
+```bash
+# CORRECT — no quotes, no trailing spaces, no extra lines
+AUTH_URL=http://localhost:3000
+AUTH_SECRET=x+ZTkCqzF/a6sILYODr9Cf5RzzppkwaVJUmv30mcD5s=
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=x+ZTkCqzF/a6sILYODr9Cf5RzzppkwaVJUmv30mcD5s=
+GOOGLE_CLIENT_ID=366920354304-....apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-...
+```
+
+⚠️ **Common pitfalls:**
+- `npx auth secret` appends a stray `https://cli.authjs.dev` URL line to `.env.local` — remove it manually or everything below it may not parse
+- Wrapping values in quotes (e.g. `AUTH_SECRET="..."`) causes NextAuth to include the literal quote characters in the secret, making it invalid
+- `AUTH_SECRET` and `NEXTAUTH_SECRET` must be set for **all three** Vercel environments (Production, Preview, Development), not just Production
+- `GOOGLE_CLIENT_SECRET` characters are easily misread — `I` (capital i) vs `l` (lowercase L) vs `1` (one). Always copy-paste directly from Google Cloud Console; never retype
+
+### Updating env vars on Vercel (CLI method)
+
+Because `vercel env add` prompts interactively, use the REST API to update programmatically:
+
+```bash
+# 1. Get env var IDs
+npx vercel env ls
+
+# 2. Update via Vercel REST API (replace ENV_ID and VALUE)
+curl -X PATCH "https://api.vercel.com/v9/projects/PROJECT_ID/env/ENV_ID?teamId=TEAM_ID" \
+  -H "Authorization: Bearer VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data-raw '{"value":"NEW_VALUE"}'
+
+# 3. Redeploy to pick up changes
+npx vercel --prod --yes
+```
+
+Vercel project details (coord-app):
+- `PROJECT_ID`: `prj_HADm2p2O0QmWDl0hNERNeLhkKdsx`
+- `TEAM_ID`: `team_nE6pPXTLyH3qjQQQw2bzU7RJ`
+- Token: stored in `~/Library/Application Support/com.vercel.cli/auth.json`
+
+## Google Cloud Console Setup
+
+1. **Project:** GCP project linked to the Coord app
+2. **APIs:** Google Calendar API enabled
+3. **OAuth consent screen:**
+   - App name: `Coord`
+   - Scopes: `calendar.readonly`, `calendar.events`
+   - Publishing status: **Testing** — add each tester's email as a Test User
+4. **OAuth 2.0 Credentials (Web application):**
+   - Authorised redirect URIs — both must be present:
+     ```
+     http://localhost:3000/api/auth/callback/google
+     https://coord-app.vercel.app/api/auth/callback/google
+     ```
+
+> ⚠️ If the production redirect URI is missing, Google completes the consent screen but then rejects the callback — NextAuth surfaces this as `?error=Configuration`.
+
+## Deploy Steps
+
+```bash
+cd /Users/santoshkikkeri/Claude/coord-app
+
+# First-time deploy (interactive login + project link)
+npx vercel
+
+# Production deploy
+npx vercel --prod --yes
+
+# After changing env vars on Vercel dashboard/API, always redeploy:
+npx vercel --prod --yes
+```
+
+## Troubleshooting: `?error=Configuration`
+
+This generic NextAuth error can mean several things. Diagnosis checklist in order:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Error before Google consent screen | `trustHost: true` missing from `lib/auth.ts` | Add it — required for all non-localhost hosts |
+| Error before Google consent screen | `AUTH_SECRET` not set or malformed on Vercel | Check Vercel env vars; ensure no quotes in value |
+| Error **after** Google consent screen | `GOOGLE_CLIENT_SECRET` wrong on Vercel | Test with `/api/debug-auth` route; look for `invalid_client` vs `invalid_grant` |
+| Error **after** Google consent screen | Production redirect URI not in Google Cloud Console | Add `https://coord-app.vercel.app/api/auth/callback/google` |
+
+**Diagnostic approach:** Create a temporary `/api/debug-auth` route that POSTs a dummy code to `oauth2.googleapis.com/token`. If response is `invalid_client` → credentials wrong. If `invalid_grant` → credentials are correct (dummy code is expected to fail).
+
+## CI/CD (Future)
+
+Planned: Connect GitHub repo (`skikkeri/coord-app`) to Vercel for automatic deployments:
+- `main` branch → production deployment
+- Pull requests → preview deployments (shareable URLs for testing flows)
+
+---
+
+# Analytics
+
+## Google Analytics 4
+
+Coord uses GA4 for pageview tracking across all 8 screens. Instrumentation is live on https://coord-app.vercel.app.
+
+**Measurement ID:** `G-JH1S424Q6S`
+**GA4 Dashboard:** https://analytics.google.com
+
+### Implementation
+
+| File | Role |
+|------|------|
+| `lib/gtag.ts` | Thin helpers: `pageview(url)` and `event(action, params)` |
+| `app/components/Analytics.tsx` | Client component — fires `pageview` on every SPA route change via `usePathname` + `useSearchParams` |
+| `app/layout.tsx` | Injects `gtag.js` script + init snippet using `next/script strategy="afterInteractive"` |
+
+GA4 scripts are only injected when `NEXT_PUBLIC_GA_ID` is set, so local dev without the var set is clean.
+
+### What's tracked automatically
+
+- **Page views** — every navigation across all 8 screens
+- **Session duration**, **bounce rate**, **traffic source**, **device/browser** — collected by GA4 natively
+
+### Adding custom events
+
+```ts
+import { event } from '@/lib/gtag';
+
+// Examples — add to any client component:
+event('booking_confirmed', { meeting_type: 'Technical Demo', duration_min: 45 });
+event('calendar_connected', { provider: 'google' });
+event('booking_link_copied', { deal_name: 'NorthStar Ops' });
+```
+
+### Environment variable
+
+| Variable | Value | Environments |
+|----------|-------|-------------|
+| `NEXT_PUBLIC_GA_ID` | `G-JH1S424Q6S` | Production, Preview, Development (Vercel) + `.env.local` |
 
 ---
 
