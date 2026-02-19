@@ -1,18 +1,10 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 
-// ── TypeScript augmentation for custom session/token fields ──────────────────
+// ── TypeScript augmentation for custom session fields ────────────────────────
 declare module 'next-auth' {
   interface Session {
     accessToken?: string;
-    error?: string;
-  }
-}
-declare module 'next-auth/jwt' {
-  interface JWT {
-    accessToken?: string;
-    refreshToken?: string;
-    expiresAt?: number;
     error?: string;
   }
 }
