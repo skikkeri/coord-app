@@ -16,6 +16,29 @@ export function CalendarConnect() {
   }
 
   if (session) {
+    // Access token refresh failed — the user's Google session has expired or was revoked
+    if ((session as any).error === 'RefreshAccessTokenError') {
+      return (
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+            style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', fontSize: 12, fontWeight: 600 }}
+          >
+            <Calendar size={13} />
+            <span>Session expired</span>
+          </div>
+          <Button
+            appearance="solid"
+            sentiment="accented"
+            onClick={() => signIn('google')}
+            style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            Reconnect
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div className="flex items-center gap-2">
         <div
