@@ -2,25 +2,49 @@
 import { useState } from 'react';
 import { calDays } from '@/lib/mock-data';
 import clsx from 'clsx';
-import { Check, X } from 'lucide-react';
+import { Check, X, Loader2, AlertCircle } from 'lucide-react';
 
 const buyerSlots = ['10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '3:30 PM', '4:00 PM'];
+
+// Maps display time strings to hour offsets for building ISO datetimes
+const slotHours: Record<string, { h: number; m: number }> = {
+  '10:00 AM': { h: 10, m: 0 },
+  '11:00 AM': { h: 11, m: 0 },
+  '2:00 PM':  { h: 14, m: 0 },
+  '3:00 PM':  { h: 15, m: 0 },
+  '3:30 PM':  { h: 15, m: 30 },
+  '4:00 PM':  { h: 16, m: 0 },
+};
+
+// calDays are Feb 23-27 2026
+const dayDates = [23, 24, 25, 26, 27];
 
 interface Colleague { email: string }
 
 export default function BuyerBookingPage() {
   const [confirmed, setConfirmed] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(1); // Tue
+  const [selectedDay, setSelectedDay] = useState(1); // Tue 24
   const [selectedSlot, setSelectedSlot] = useState('2:00 PM');
-  const [email, setEmail] = useState('');
-  const [colleagues, setColleagues] = useState<Colleague[]>([
-    { email: 'sarah.it@northstarops.com' }
-  ]);
+
+  // Controlled form fields
+  const [buyerName, setBuyerName] = useState('Derek Thompson');
+  const [buyerEmail, setBuyerEmail] = useState('derek@northstarops.com');
+  const [buyerCompany, setBuyerCompany] = useState('NorthStar Ops');
+  const [notes, setNotes] = useState('');
+
+  // Colleague management (post-confirmation)
+  const [colleagueEmail, setColleagueEmail] = useState('');
+  const [colleagues, setColleagues] = useState<Colleague[]>([]);
+
+  // Async state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [meetLink, setMeetLink] = useState('');
 
   function addColleague() {
-    if (email && email.includes('@')) {
-      setColleagues(prev => [...prev, { email }]);
-      setEmail('');
+    if (colleagueEmail && colleagueEmail.includes('@')) {
+      setColleagues(prev => [...prev, { email: colleagueEmail }]);
+      setColleagueEmail('');
     }
   }
 
@@ -28,7 +52,61 @@ export default function BuyerBookingPage() {
     setColleagues(prev => prev.filter((_, i) => i !== idx));
   }
 
+  async function handleConfirm() {
+    setLoading(true);
+    setError('');
+
+    // Build ISO datetimes for the selected day + slot
+    const { h, m } = slotHours[selectedSlot];
+    const day = dayDates[selectedDay];
+    const start = new Date(Date.UTC(2026, 1, day, h, m, 0));   // month is 0-indexed: 1=Feb
+    const end   = new Date(Date.UTC(2026, 1, day, h, m + 45, 0)); // 45-min meeting
+
+    const description = [
+      `Booked by: ${buyerName} <${buyerEmail}> — ${buyerCompany}`,
+      notes ? `Notes: ${notes}` : '',
+      '',
+      'Attendees (vendor side):',
+      '• Marcus Chen — Account Executive',
+      '• Priya Sharma — Sales Engineer',
+    ].filter(Boolean).join('\n');
+
+    try {
+      const res = await fetch('/api/calendar/create-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary: `Technical Demo — ${buyerCompany} × Veritas Cloud`,
+          description,
+          startDateTime: start.toISOString(),
+          endDateTime:   end.toISOString(),
+          attendees: [
+            { email: buyerEmail },
+            { email: 'marcus@veritascloud.com' },
+            { email: 'priya@veritascloud.com' },
+          ],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to create calendar event. Are you signed in with Google Calendar?');
+        setLoading(false);
+        return;
+      }
+
+      setMeetLink(data.link ?? '');
+      setConfirmed(true);
+    } catch (e: any) {
+      setError(e.message ?? 'Network error — please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (confirmed) {
+    const day = calDays[selectedDay];
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
         {/* Topbar */}
@@ -45,20 +123,28 @@ export default function BuyerBookingPage() {
             <div className="text-center px-7 py-7 border-b border-emerald-100" style={{ background: 'linear-gradient(135deg, #ECFDF5, #F0FDF4)' }}>
               <div className="w-14 h-14 rounded-full bg-emerald-600 flex items-center justify-center mx-auto mb-3 text-2xl">✓</div>
               <div className="text-[20px] font-extrabold text-emerald-900">You're booked!</div>
-              <div className="text-[14px] text-emerald-600 mt-1">A calendar invite has been sent to derek@northstarops.com</div>
+              <div className="text-[14px] text-emerald-600 mt-1">A calendar invite has been sent to {buyerEmail}</div>
             </div>
 
             <div className="p-6">
               <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Meeting Details</p>
-              {[
-                ['📅', <><strong>Tuesday, 24 February 2026</strong> · 2:00 PM – 2:45 PM (GMT)</>],
-                ['🖥️', 'Google Meet · Link in your calendar invite'],
-                ['⏱️', '45 minutes · Technical Demo'],
-              ].map(([icon, text], i) => (
-                <div key={i} className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
-                  <span className="text-base">{icon}</span><div>{text}</div>
+              <div className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
+                <span className="text-base">📅</span>
+                <div><strong>{day.name} {day.num} Feb 2026</strong> · {selectedSlot} – 45 min (GMT)</div>
+              </div>
+              <div className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
+                <span className="text-base">🖥️</span>
+                <div>
+                  Google Meet ·{' '}
+                  {meetLink
+                    ? <a href={meetLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">Open meeting link</a>
+                    : 'Link in your calendar invite'}
                 </div>
-              ))}
+              </div>
+              <div className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
+                <span className="text-base">⏱️</span>
+                <div>45 minutes · Technical Demo · {buyerCompany}</div>
+              </div>
 
               <hr className="my-4 border-gray-100" />
               <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Who you'll meet</p>
@@ -77,12 +163,12 @@ export default function BuyerBookingPage() {
               {/* Add colleagues */}
               <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4">
                 <div className="text-[14px] font-bold text-blue-800 mb-1">👥 Bring your team</div>
-                <div className="text-[12px] text-blue-600 mb-3">Add colleagues — they'll get their own invite with an agenda and context on who's attending from our side.</div>
+                <div className="text-[12px] text-blue-600 mb-3">Add colleagues — they'll get their own calendar invite.</div>
                 <div className="flex gap-2 mb-2.5">
                   <input
                     type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    value={colleagueEmail}
+                    onChange={e => setColleagueEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addColleague()}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-blue-500"
                     placeholder="colleague@company.com"
@@ -107,7 +193,7 @@ export default function BuyerBookingPage() {
               </div>
 
               <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11.5px] text-amber-800 flex gap-1.5">
-                💡 Each colleague receives a personalised invite — no vendor involvement needed. Derek handles his own team.
+                💡 Each colleague receives a personalised invite — no vendor involvement needed.
               </div>
             </div>
           </div>
@@ -194,35 +280,60 @@ export default function BuyerBookingPage() {
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Your details</p>
                 <div className="flex flex-col gap-3">
-                  {[
-                    { label: 'Name', value: 'Derek Thompson', type: 'text' },
-                    { label: 'Work email', value: 'derek@northstarops.com', type: 'email' },
-                    { label: 'Company', value: 'NorthStar Ops', type: 'text' },
-                  ].map((f) => (
-                    <div key={f.label}>
-                      <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">{f.label}</label>
-                      <input
-                        type={f.type}
-                        defaultValue={f.value}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                  ))}
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={buyerName}
+                      onChange={e => setBuyerName(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Work email</label>
+                    <input
+                      type="email"
+                      value={buyerEmail}
+                      onChange={e => setBuyerEmail(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Company</label>
+                    <input
+                      type="text"
+                      value={buyerCompany}
+                      onChange={e => setBuyerCompany(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
                   <div>
                     <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Anything to prepare? (optional)</label>
                     <input
                       type="text"
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-emerald-500"
                       placeholder="e.g. We'll have our IT lead joining"
                     />
                   </div>
 
+                  {error && (
+                    <div className="flex items-start gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-[12px] text-red-700">
+                      <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+                      {error}
+                    </div>
+                  )}
+
                   <button
-                    onClick={() => setConfirmed(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[14px] font-bold transition-colors mt-1"
+                    onClick={handleConfirm}
+                    disabled={loading || !buyerEmail || !buyerName}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-bold transition-colors mt-1"
                   >
-                    <Check size={16} />
-                    Confirm — {calDays[selectedDay].name} {calDays[selectedDay].num} Feb at {selectedSlot} →
+                    {loading
+                      ? <><Loader2 size={16} className="animate-spin" /> Creating event…</>
+                      : <><Check size={16} /> Confirm — {calDays[selectedDay].name} {calDays[selectedDay].num} Feb at {selectedSlot} →</>
+                    }
                   </button>
                 </div>
               </div>
