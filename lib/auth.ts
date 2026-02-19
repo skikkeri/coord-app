@@ -39,6 +39,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
+  logger: {
+    error: (error: any) => { console.error('[NextAuth Error]', error?.message ?? error, error?.cause ?? ''); },
+    warn:  (code: any)  => { console.warn('[NextAuth Warn]', code); },
+  },
   // v5 reads AUTH_SECRET from env automatically; belt-and-suspenders fallback
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   // Required for NextAuth v5 beta on non-localhost hosts (e.g. Vercel)
