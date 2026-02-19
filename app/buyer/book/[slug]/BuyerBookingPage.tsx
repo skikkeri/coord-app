@@ -28,7 +28,7 @@ export default function BuyerBookingPage() {
 
   // Controlled form fields
   const [buyerName, setBuyerName] = useState('Derek Thompson');
-  const [buyerEmail, setBuyerEmail] = useState('derek@northstarops.com');
+  const [buyerEmail, setBuyerEmail] = useState('kssantosh84@gmail.com');
   const [buyerCompany, setBuyerCompany] = useState('NorthStar Ops');
   const [notes, setNotes] = useState('');
 
@@ -82,8 +82,7 @@ export default function BuyerBookingPage() {
           endDateTime:   end.toISOString(),
           attendees: [
             { email: buyerEmail },
-            { email: 'marcus@veritascloud.com' },
-            { email: 'priya@veritascloud.com' },
+            { email: 'santosh.kikkeri@gmail.com' }, // Marcus + Priya (same inbox for testing)
           ],
         }),
       });
