@@ -4,8 +4,9 @@ import { mockMeetings } from '@/lib/mock-data';
 import { Badge } from '../components/Badge';
 import { Card, CardHeader, CardTitle } from '../components/Card';
 import { CalendarConnect } from '../components/CalendarConnect';
+import { useMobileMenu } from '../components/MobileMenuContext';
 import { Text, Button, StackLayout, FlowLayout } from '@salt-ds/core';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Menu } from 'lucide-react';
 
 const statusVariant = {
   confirmed: 'green' as const,
@@ -26,15 +27,24 @@ const dotColor: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const { onOpen } = useMobileMenu();
   return (
     <>
       {/* Top bar */}
       <div
-        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        className="flex items-center gap-3 px-4 md:px-7 h-14 flex-shrink-0"
         style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
       >
+        <button
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-md -ml-1"
+          style={{ color: '#64748B', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onClick={onOpen}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
         <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>Dashboard</Text>
-        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>Wed 18 Feb, 2026</Text>
+        <Text className="hidden sm:block" style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>Wed 18 Feb, 2026</Text>
         <CalendarConnect />
         <Link href="/book" style={{ textDecoration: 'none' }}>
           <Button appearance="solid" sentiment="accented" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
@@ -43,9 +53,9 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="flex-1 p-7">
+      <div className="flex-1 p-4 md:p-7">
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3.5 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-5">
           {[
             { label: 'Meetings this week', value: '7', delta: '↑ 2 vs last week', positive: true },
             { label: 'Awaiting confirmation', value: '3', delta: "Buyer hasn't picked yet", positive: false },
@@ -84,7 +94,8 @@ export default function DashboardPage() {
               Filter
             </Button>
           </CardHeader>
-          <div>
+          <div className="overflow-x-auto">
+            <div style={{ minWidth: 600 }}>
             {mockMeetings.map((m) => (
               <Link
                 href={m.status === 'draft' ? '/book' : '#'}
@@ -126,6 +137,7 @@ export default function DashboardPage() {
                 </div>
               </Link>
             ))}
+            </div>
           </div>
         </Card>
 

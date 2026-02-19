@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { Text, Button, Input, FormField, FormFieldLabel, FormFieldHelperText, Dropdown, Option } from '@salt-ds/core';
 import { Card, CardHeader, CardTitle, CardBody } from '../components/Card';
 import { Badge } from '../components/Badge';
+import { useMobileMenu } from '../components/MobileMenuContext';
 import { mockSlots, calDays } from '@/lib/mock-data';
 import clsx from 'clsx';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Menu } from 'lucide-react';
 
 type Step = 1 | 2 | 3;
 type MeetingType = 'Technical Demo' | 'Discovery' | 'QBR / Strategy';
@@ -41,7 +42,7 @@ function StepIndicator({ current }: { current: Step }) {
               {s.label}
             </div>
             {i < steps.length - 1 && (
-              <div style={{ height: 2, width: 48, margin: '0 8px', background: done ? '#16A34A' : '#E2E8F0', flexShrink: 0 }} />
+              <div style={{ height: 2, width: 32, margin: '0 4px', background: done ? '#16A34A' : '#E2E8F0', flexShrink: 0 }} />
             )}
           </div>
         );
@@ -51,6 +52,7 @@ function StepIndicator({ current }: { current: Step }) {
 }
 
 export default function BookingFlow() {
+  const { onOpen } = useMobileMenu();
   const [step, setStep] = useState<Step>(1);
   const [meetingType, setMeetingType] = useState<MeetingType>('Technical Demo');
   const [selectedDay, setSelectedDay] = useState(0);
@@ -70,20 +72,28 @@ export default function BookingFlow() {
     <>
       {/* Top bar */}
       <div
-        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        className="flex items-center gap-3 px-4 md:px-7 h-14 flex-shrink-0"
         style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
       >
+        <button
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-md -ml-1"
+          style={{ color: '#64748B', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onClick={onOpen}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
         <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>
           {step === 3 ? 'Booking Link Ready' : 'Book a Demo'}
         </Text>
-        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+        <Text className="hidden sm:block" style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
           {step === 1 && 'Step 1 of 2 — Deal & Meeting Type'}
           {step === 2 && 'Step 2 of 2 — Select Internal Team'}
           {step === 3 && 'Veritas Cloud · Technical Demo · 45 min'}
         </Text>
       </div>
 
-      <div className="flex-1 p-7" style={{ maxWidth: 720 }}>
+      <div className="flex-1 p-4 md:p-7" style={{ maxWidth: 720 }}>
         <StepIndicator current={step} />
 
         {/* ─── STEP 1 ─── */}
@@ -110,7 +120,7 @@ export default function BookingFlow() {
                 <Text style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#475569', marginBottom: 6, display: 'block' }}>
                   Meeting Type
                 </Text>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {(['Technical Demo', 'Discovery', 'QBR / Strategy'] as MeetingType[]).map((t) => (
                     <button
                       key={t}
@@ -257,7 +267,7 @@ export default function BookingFlow() {
                 </div>
 
                 {/* Slot grid */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {mockSlots.map((s) => (
                     <button
                       key={s.time}
@@ -326,7 +336,7 @@ export default function BookingFlow() {
                 </div>
 
                 <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Share via</Text>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {['📧 Email', '💬 Slack', '🔗 CRM Activity'].map((label) => (
                     <Button key={label} appearance="bordered" sentiment="neutral" style={{ fontSize: 12 }}>
                       {label}
@@ -340,7 +350,7 @@ export default function BookingFlow() {
             <Card>
               <CardHeader><CardTitle>Attendee Summary</CardTitle></CardHeader>
               <CardBody>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Your Team</Text>
                     <div className="flex flex-col gap-2">

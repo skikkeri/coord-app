@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Text, Button, Switch, FormField, FormFieldLabel, Toast, ToastContent } from '@salt-ds/core';
 import { Card, CardHeader, CardTitle, CardBody } from '@/app/components/Card';
 import { CalendarConnect } from '@/app/components/CalendarConnect';
+import { useMobileMenu } from '@/app/components/MobileMenuContext';
+import { Menu } from 'lucide-react';
 
 const HOURS = ['9–10 AM', '10–11 AM', '11–12 PM', '12–1 PM', '1–2 PM', '2–3 PM', '3–4 PM', '4–5 PM'];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -19,6 +21,7 @@ const initialGrid: ('on' | 'off' | 'blocked')[][] = [
 ];
 
 export default function SEAvailabilityPage() {
+  const { onOpen } = useMobileMenu();
   const [grid, setGrid] = useState(initialGrid);
   const [saved, setSaved] = useState(false);
 
@@ -44,11 +47,19 @@ export default function SEAvailabilityPage() {
   return (
     <>
       <div
-        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        className="flex items-center gap-3 px-4 md:px-7 h-14 flex-shrink-0"
         style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
       >
+        <button
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-md -ml-1"
+          style={{ color: '#64748B', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onClick={onOpen}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
         <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>My Availability</Text>
-        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>Control when AEs can book you for demos</Text>
+        <Text className="hidden sm:block" style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>Control when AEs can book you for demos</Text>
         <CalendarConnect />
         <Button
           appearance="solid"
@@ -70,8 +81,8 @@ export default function SEAvailabilityPage() {
         </div>
       )}
 
-      <div className="flex-1 p-7">
-        <div className="grid grid-cols-2 gap-5">
+      <div className="flex-1 p-4 md:p-7">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="flex flex-col gap-4">
             <Card>
               <CardHeader><CardTitle>Bookable Windows</CardTitle></CardHeader>
@@ -79,7 +90,8 @@ export default function SEAvailabilityPage() {
                 <Text style={{ fontSize: 11, color: '#94A3B8', marginBottom: 12, display: 'block' }}>
                   Click cells to toggle availability. Purple = open for bookings.
                 </Text>
-                <div className="grid gap-1" style={{ gridTemplateColumns: '72px repeat(5, 1fr)' }}>
+                <div className="overflow-x-auto -mx-1 px-1">
+                <div className="grid gap-1" style={{ gridTemplateColumns: '72px repeat(5, 1fr)', minWidth: 380 }}>
                   <div />
                   {DAYS.map(d => (
                     <Text key={d} style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'center', color: '#64748B', margin: 0, padding: '4px 0' }}>
@@ -105,6 +117,7 @@ export default function SEAvailabilityPage() {
                       ))}
                     </>
                   ))}
+                </div>
                 </div>
                 <div className="flex gap-4 mt-3">
                   {[

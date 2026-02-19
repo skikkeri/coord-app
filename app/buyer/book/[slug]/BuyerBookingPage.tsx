@@ -106,7 +106,7 @@ export default function BuyerBookingPage() {
 
   // ── Shared topbar ──
   const Topbar = () => (
-    <div className="flex items-center gap-3.5 px-7 h-14" style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+    <div className="flex items-center gap-3.5 px-4 md:px-7 h-14" style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
       <Text style={{ fontSize: 16, fontWeight: 800, color: '#1A1D23', margin: 0 }}>
         ⚡ <span style={{ color: '#059669' }}>Coord</span>
       </Text>
@@ -120,16 +120,16 @@ export default function BuyerBookingPage() {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#F0F2F5' }}>
         <Topbar />
-        <div className="flex-1 flex items-start justify-center p-8">
+        <div className="flex-1 flex items-start justify-center p-4 md:p-8">
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, width: '100%', maxWidth: 640, overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
             {/* Hero */}
-            <div className="text-center px-7 py-7" style={{ background: 'linear-gradient(135deg, #ECFDF5, #F0FDF4)', borderBottom: '1px solid #D1FAE5' }}>
+            <div className="text-center px-4 py-5 md:px-7 md:py-7" style={{ background: 'linear-gradient(135deg, #ECFDF5, #F0FDF4)', borderBottom: '1px solid #D1FAE5' }}>
               <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: '#059669', fontSize: 24 }}>✓</div>
               <Text styleAs="h3" style={{ color: '#064E3B', fontWeight: 800, margin: 0 }}>You're booked!</Text>
               <Text style={{ fontSize: 14, color: '#059669', margin: '4px 0 0' }}>A calendar invite has been sent to {buyerEmail}</Text>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 12, display: 'block' }}>Meeting Details</Text>
               {[
                 { icon: '📅', content: <><strong>{day.name} {day.num} Feb 2026</strong> · {selectedSlot} – 45 min (GMT)</> },
@@ -202,18 +202,18 @@ export default function BuyerBookingPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F0F2F5' }}>
       <Topbar />
-      <div className="flex-1 flex items-start justify-center p-8">
+      <div className="flex-1 flex items-start justify-center p-4 md:p-8">
         <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, width: '100%', maxWidth: 768, overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           {/* Green header */}
           <div className="px-7 py-6" style={{ background: '#059669' }}>
             <Text styleAs="h3" style={{ color: '#fff', fontWeight: 800, margin: '0 0 4px' }}>Book a Demo with Veritas Cloud Team</Text>
             <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: 0 }}>Technical Demo · 45 minutes · Google Meet</Text>
-            <div className="flex gap-2.5 mt-3.5">
+            <div className="flex flex-wrap gap-2.5 mt-3.5">
               {[
                 { init: 'M', name: 'Marcus Chen', role: 'Account Executive', bg: '#2563EB' },
                 { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer', bg: '#7C3AED' },
               ].map((a) => (
-                <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1 min-w-[150px]" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ background: a.bg, fontSize: 10, fontWeight: 700 }}>{a.init}</div>
                   <div>
                     <Text style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{a.name}</Text>
@@ -225,8 +225,8 @@ export default function BuyerBookingPage() {
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            <div className="grid grid-cols-2 gap-7">
+          <div className="p-4 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7">
               {/* Left: date + slots */}
               <div>
                 <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Select a date</Text>
@@ -251,7 +251,7 @@ export default function BuyerBookingPage() {
                 <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>
                   Available times — {calDays[selectedDay].name} {calDays[selectedDay].num} Feb
                 </Text>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {buyerSlots.map((s) => (
                     <button
                       key={s}

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Text, Button } from '@salt-ds/core';
 import { Card, CardHeader, CardTitle } from '@/app/components/Card';
 import { Badge } from '@/app/components/Badge';
+import { useMobileMenu } from '@/app/components/MobileMenuContext';
+import { Menu } from 'lucide-react';
 
 const demos = [
   { month: 'FEB', day: 23, company: 'Veritas Cloud', ae: 'Marcus Chen', type: 'Technical Demo', time: '2:00 PM – 2:45 PM', attendees: 4, briefReady: true, status: 'confirmed' as const },
@@ -12,14 +14,23 @@ const demos = [
 ];
 
 export default function SEDemosPage() {
+  const { onOpen } = useMobileMenu();
   return (
     <>
       <div
-        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        className="flex items-center gap-3 px-4 md:px-7 h-14 flex-shrink-0"
         style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
       >
+        <button
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-md -ml-1"
+          style={{ color: '#64748B', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onClick={onOpen}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
         <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>My Upcoming Demos</Text>
-        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>4 demos in the next 7 days</Text>
+        <Text className="hidden sm:block" style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>4 demos in the next 7 days</Text>
         <Link href="/se/availability" style={{ textDecoration: 'none' }}>
           <Button appearance="bordered" sentiment="neutral" style={{ fontSize: 13 }}>
             Edit Availability
@@ -27,8 +38,8 @@ export default function SEDemosPage() {
         </Link>
       </div>
 
-      <div className="flex-1 p-7">
-        <div className="grid grid-cols-2 gap-5">
+      <div className="flex-1 p-4 md:p-7">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Card>
             <CardHeader><CardTitle>This Week</CardTitle></CardHeader>
             <div>

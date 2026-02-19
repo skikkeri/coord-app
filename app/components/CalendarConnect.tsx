@@ -46,8 +46,8 @@ export function CalendarConnect() {
           style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: 12, fontWeight: 600 }}
         >
           <Calendar size={13} />
-          <span>Google Calendar connected</span>
-          <span style={{ color: '#4ADE80', fontSize: 10 }}>({session.user?.email})</span>
+          <span className="hidden sm:inline">Google Calendar connected</span>
+          <span className="hidden sm:inline" style={{ color: '#4ADE80', fontSize: 10 }}>({session.user?.email})</span>
         </div>
         <Tooltip content="Disconnect Google Calendar" placement="bottom">
           <Button
@@ -72,7 +72,7 @@ export function CalendarConnect() {
       style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
     >
       <Calendar size={13} />
-      Connect Google Calendar
+      <span className="hidden sm:inline">Connect Google Calendar</span>
     </Button>
   );
 }
