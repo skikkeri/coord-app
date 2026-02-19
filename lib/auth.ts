@@ -1,6 +1,8 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 
+// NextAuth v5: primary env var is AUTH_SECRET (not NEXTAUTH_SECRET).
+// NEXTAUTH_URL → AUTH_URL. We support both for convenience.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
@@ -23,6 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, account }) {
+      // Persist OAuth tokens to the JWT right after sign-in
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
@@ -31,9 +34,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
+      // Expose access token so server routes can call Google APIs
       (session as any).accessToken = token.accessToken;
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  // v5 reads AUTH_SECRET from env automatically; belt-and-suspenders fallback
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
 });
