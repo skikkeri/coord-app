@@ -1,13 +1,24 @@
+import { Text } from '@salt-ds/core';
 import clsx from 'clsx';
 
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, style }: CardProps) {
   return (
-    <div className={clsx('bg-white border border-gray-200 rounded-xl overflow-hidden', className)}>
+    <div
+      className={clsx('overflow-hidden', className)}
+      style={{
+        background: '#ffffff',
+        border: '1px solid #E2E8F0',
+        borderRadius: 12,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        ...style,
+      }}
+    >
       {children}
     </div>
   );
@@ -15,14 +26,26 @@ export function Card({ children, className }: CardProps) {
 
 export function CardHeader({ children, className }: CardProps) {
   return (
-    <div className={clsx('px-4 py-3 border-b border-gray-100 flex items-center gap-2.5', className)}>
+    <div
+      className={clsx('flex items-center gap-2.5 px-4 py-3', className)}
+      style={{ borderBottom: '1px solid #F1F5F9' }}
+    >
       {children}
     </div>
   );
 }
 
-export function CardTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h3 className={clsx('text-[13.5px] font-bold text-gray-900 flex-1', className)}>{children}</h3>;
+export function CardTitle({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  return (
+    <Text
+      styleAs="h4"
+      as="h3"
+      className={clsx('flex-1', className)}
+      style={{ margin: 0, fontWeight: 700, fontSize: 14, ...style }}
+    >
+      {children}
+    </Text>
+  );
 }
 
 export function CardBody({ children, className }: CardProps) {

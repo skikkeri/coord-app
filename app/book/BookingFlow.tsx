@@ -1,17 +1,18 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { Text, Button, Input, FormField, FormFieldLabel, FormFieldHelperText, Dropdown, Option } from '@salt-ds/core';
 import { Card, CardHeader, CardTitle, CardBody } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { mockSlots, calDays } from '@/lib/mock-data';
 import clsx from 'clsx';
-import { Check, Copy, AlertTriangle } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 type Step = 1 | 2 | 3;
 type MeetingType = 'Technical Demo' | 'Discovery' | 'QBR / Strategy';
 
-interface StepIndicatorProps { current: Step }
-function StepIndicator({ current }: StepIndicatorProps) {
+// Salt-styled step indicator
+function StepIndicator({ current }: { current: Step }) {
   const steps = [
     { n: 1, label: 'Deal & Type' },
     { n: 2, label: 'Select Team' },
@@ -19,27 +20,32 @@ function StepIndicator({ current }: StepIndicatorProps) {
   ];
   return (
     <div className="flex items-center gap-0 mb-6">
-      {steps.map((s, i) => (
-        <div key={s.n} className="flex items-center">
-          <div className={clsx('flex items-center gap-2 text-[13px] font-semibold', {
-            'text-blue-600': current === s.n,
-            'text-emerald-600': current > s.n,
-            'text-gray-400': current < s.n,
-          })}>
-            <div className={clsx('w-6 h-6 rounded-full border-2 flex items-center justify-center text-[12px] font-bold flex-shrink-0', {
-              'bg-blue-600 border-blue-600 text-white': current === s.n,
-              'bg-emerald-600 border-emerald-600 text-white': current > s.n,
-              'border-current text-current': current < s.n,
-            })}>
-              {current > s.n ? <Check size={11} /> : s.n}
+      {steps.map((s, i) => {
+        const done = current > s.n;
+        const active = current === s.n;
+        return (
+          <div key={s.n} className="flex items-center">
+            <div className="flex items-center gap-2" style={{ fontSize: 13, fontWeight: 600, color: active ? '#2563EB' : done ? '#16A34A' : '#94A3B8' }}>
+              <div
+                className="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  background: active ? '#2563EB' : done ? '#16A34A' : 'transparent',
+                  borderColor: active ? '#2563EB' : done ? '#16A34A' : '#CBD5E1',
+                  color: active || done ? '#fff' : '#94A3B8',
+                }}
+              >
+                {done ? <Check size={11} /> : s.n}
+              </div>
+              {s.label}
             </div>
-            {s.label}
+            {i < steps.length - 1 && (
+              <div style={{ height: 2, width: 48, margin: '0 8px', background: done ? '#16A34A' : '#E2E8F0', flexShrink: 0 }} />
+            )}
           </div>
-          {i < steps.length - 1 && (
-            <div className={clsx('h-0.5 w-12 mx-2 flex-shrink-0', current > s.n ? 'bg-emerald-600' : 'bg-gray-200')} />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -63,15 +69,18 @@ export default function BookingFlow() {
   return (
     <>
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-7 h-14 bg-white border-b border-gray-200 flex-shrink-0">
-        <h1 className="text-base font-bold text-gray-900 flex-1">
+      <div
+        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
+      >
+        <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>
           {step === 3 ? 'Booking Link Ready' : 'Book a Demo'}
-        </h1>
-        <span className="text-[13px] text-gray-400">
+        </Text>
+        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
           {step === 1 && 'Step 1 of 2 — Deal & Meeting Type'}
           {step === 2 && 'Step 2 of 2 — Select Internal Team'}
           {step === 3 && 'Veritas Cloud · Technical Demo · 45 min'}
-        </span>
+        </Text>
       </div>
 
       <div className="flex-1 p-7" style={{ maxWidth: 720 }}>
@@ -82,66 +91,82 @@ export default function BookingFlow() {
           <Card>
             <CardHeader><CardTitle>Meeting Details</CardTitle></CardHeader>
             <CardBody>
-              <div className="mb-4">
-                <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1.5">Deal / Account</label>
-                <select className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-[13.5px] text-gray-900 focus:outline-none focus:border-blue-500">
+              {/* Deal selector */}
+              <FormField labelPlacement="top" style={{ marginBottom: 16 }}>
+                <FormFieldLabel>Deal / Account</FormFieldLabel>
+                <select
+                  className="w-full px-3 py-2.5 rounded-lg text-sm"
+                  style={{ border: '1px solid #CBD5E1', fontSize: 13.5, color: '#1A1D23', outline: 'none', background: '#fff' }}
+                >
                   <option>Veritas Cloud — Mid-Market · Stage: Demo</option>
                   <option>NorthStar Ops — SMB · Stage: Discovery</option>
                   <option>Axiom Finance — Enterprise · Stage: Demo</option>
                 </select>
-                <p className="text-[11px] text-gray-400 mt-1">Linked to CRM — attendee context will be pulled automatically</p>
-              </div>
+                <FormFieldHelperText>Linked to CRM — attendee context will be pulled automatically</FormFieldHelperText>
+              </FormField>
 
-              <div className="mb-4">
-                <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1.5">Meeting Type</label>
+              {/* Meeting type */}
+              <div style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#475569', marginBottom: 6, display: 'block' }}>
+                  Meeting Type
+                </Text>
                 <div className="grid grid-cols-3 gap-3">
                   {(['Technical Demo', 'Discovery', 'QBR / Strategy'] as MeetingType[]).map((t) => (
                     <button
                       key={t}
                       onClick={() => setMeetingType(t)}
-                      className={clsx('px-3 py-3 border-2 rounded-lg text-left transition-colors', {
-                        'border-blue-600 bg-blue-50': meetingType === t,
-                        'border-gray-200 hover:border-blue-300': meetingType !== t,
-                      })}
+                      style={{
+                        padding: '12px',
+                        borderRadius: 8,
+                        border: `2px solid ${meetingType === t ? '#2563EB' : '#E2E8F0'}`,
+                        background: meetingType === t ? '#EFF6FF' : '#fff',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
                     >
-                      <div className="text-[13.5px] font-bold text-gray-900">{t}</div>
-                      <div className="text-[12px] text-gray-500">
+                      <Text style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1D23', margin: 0 }}>{t}</Text>
+                      <Text style={{ fontSize: 12, color: '#64748B', margin: 0 }}>
                         {t === 'Technical Demo' && 'SE required'}
                         {t === 'Discovery' && 'AE only'}
                         {t === 'QBR / Strategy' && 'VP recommended'}
-                      </div>
+                      </Text>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1.5">Duration</label>
-                  <select className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-blue-500">
+              {/* Duration + notice */}
+              <div className="grid grid-cols-2 gap-4" style={{ marginBottom: 16 }}>
+                <FormField labelPlacement="top">
+                  <FormFieldLabel>Duration</FormFieldLabel>
+                  <select className="w-full px-3 py-2.5 rounded-lg" style={{ border: '1px solid #CBD5E1', fontSize: 13.5, outline: 'none', background: '#fff' }}>
                     <option>45 minutes</option>
                     <option>30 minutes</option>
                     <option>60 minutes</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1.5">Earliest booking</label>
-                  <select className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-blue-500">
+                </FormField>
+                <FormField labelPlacement="top">
+                  <FormFieldLabel>Earliest booking</FormFieldLabel>
+                  <select className="w-full px-3 py-2.5 rounded-lg" style={{ border: '1px solid #CBD5E1', fontSize: 13.5, outline: 'none', background: '#fff' }}>
                     <option>24 hrs from now</option>
                     <option>48 hrs from now</option>
                     <option>As soon as possible</option>
                   </select>
-                </div>
+                </FormField>
               </div>
 
-              <div className="mb-2">
-                <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1.5">Notes for SE (optional)</label>
+              {/* Notes */}
+              <FormField labelPlacement="top">
+                <FormFieldLabel>Notes for SE (optional)</FormFieldLabel>
                 <input
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-blue-500"
+                  type="text"
                   placeholder="e.g. Focus on data pipeline integrations — CTO will be attending"
+                  className="w-full px-3 py-2.5 rounded-lg"
+                  style={{ border: '1px solid #CBD5E1', fontSize: 13.5, outline: 'none', background: '#fff', fontFamily: 'inherit' }}
                 />
-                <p className="text-[11px] text-gray-400 mt-1">Included in the SE's pre-call brief</p>
-              </div>
+                <FormFieldHelperText>Included in the SE's pre-call brief</FormFieldHelperText>
+              </FormField>
             </CardBody>
           </Card>
         )}
@@ -149,55 +174,57 @@ export default function BookingFlow() {
         {/* ─── STEP 2 ─── */}
         {step === 2 && (
           <>
-            <Card className="mb-4">
+            <Card style={{ marginBottom: 16 }}>
               <CardHeader>
                 <CardTitle>Internal Attendees</CardTitle>
-                <span className="text-[11px] text-gray-500">Only showing times when all selected people are free</span>
+                <Text style={{ fontSize: 11, color: '#64748B', margin: 0 }}>Only showing times when all selected people are free</Text>
               </CardHeader>
               <CardBody>
-                {/* AE – always included */}
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Required</p>
-                <div className="flex items-center gap-3 px-3.5 py-3 border-2 border-emerald-200 bg-emerald-50 rounded-lg mb-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0">M</div>
+                {/* AE */}
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Required</Text>
+                <div className="flex items-center gap-3 px-3.5 py-3 rounded-lg mb-3" style={{ border: '2px solid #BBF7D0', background: '#F0FDF4' }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: '#2563EB', fontSize: 13 }}>M</div>
                   <div className="flex-1">
-                    <div className="text-[13.5px] font-bold text-gray-900">Marcus Chen <span className="text-[11px] text-emerald-600">· You</span></div>
-                    <div className="text-[12px] text-gray-500">Account Executive · Always included</div>
+                    <Text style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1D23', margin: 0 }}>Marcus Chen <span style={{ fontSize: 11, color: '#16A34A' }}>· You</span></Text>
+                    <Text style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Account Executive · Always included</Text>
                   </div>
-                  <div className="w-5 h-5 rounded-full bg-emerald-600 flex items-center justify-center"><Check size={10} className="text-white" /></div>
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#16A34A' }}><Check size={10} color="#fff" /></div>
                 </div>
 
                 {/* SE */}
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mt-4 mb-2">Sales Engineer <span className="text-red-500">*</span></p>
-                <div className="flex items-center gap-3 px-3.5 py-3 border-2 border-blue-600 bg-blue-50 rounded-lg mb-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0">P</div>
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94A3B8', marginBottom: 8, marginTop: 16, display: 'block' }}>Sales Engineer <span style={{ color: '#DC2626' }}>*</span></Text>
+                <div className="flex items-center gap-3 px-3.5 py-3 rounded-lg mb-3" style={{ border: '2px solid #2563EB', background: '#EFF6FF' }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: '#7C3AED', fontSize: 13 }}>P</div>
                   <div className="flex-1">
-                    <div className="text-[13.5px] font-bold text-gray-900">Priya Sharma</div>
-                    <div className="text-[12px] text-gray-500">Sales Engineer — handles this segment</div>
-                    <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">✓ 8 open slots next 5 days</div>
+                    <Text style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1D23', margin: 0 }}>Priya Sharma</Text>
+                    <Text style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Sales Engineer — handles this segment</Text>
+                    <Text style={{ fontSize: 11, color: '#16A34A', fontWeight: 600, margin: 0 }}>✓ 8 open slots next 5 days</Text>
                   </div>
-                  <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center"><Check size={10} className="text-white" /></div>
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#2563EB' }}><Check size={10} color="#fff" /></div>
                 </div>
 
-                {/* VP – optional */}
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mt-4 mb-2">Optional — VP / Leadership</p>
+                {/* VP */}
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94A3B8', marginBottom: 8, marginTop: 16, display: 'block' }}>Optional — VP / Leadership</Text>
                 <button
                   onClick={() => setVpIncluded(!vpIncluded)}
-                  className={clsx('w-full flex items-center gap-3 px-3.5 py-3 border-2 rounded-lg transition-colors text-left', {
-                    'border-blue-600 bg-blue-50': vpIncluded,
-                    'border-gray-200 hover:border-blue-200': !vpIncluded,
-                  })}
+                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-left transition-colors"
+                  style={{
+                    border: `2px solid ${vpIncluded ? '#2563EB' : '#E2E8F0'}`,
+                    background: vpIncluded ? '#EFF6FF' : '#fff',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0">R</div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: '#16A34A', fontSize: 13 }}>R</div>
                   <div className="flex-1">
-                    <div className="text-[13.5px] font-bold text-gray-900">Rachel Kim</div>
-                    <div className="text-[12px] text-gray-500">VP Sales — strategic accounts</div>
-                    <div className="text-[11px] text-amber-600 font-semibold mt-0.5">⚠ Only 2 slots available next 5 days</div>
+                    <Text style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1D23', margin: 0 }}>Rachel Kim</Text>
+                    <Text style={{ fontSize: 12, color: '#64748B', margin: 0 }}>VP Sales — strategic accounts</Text>
+                    <Text style={{ fontSize: 11, color: '#B45309', fontWeight: 600, margin: 0 }}>⚠ Only 2 slots available next 5 days</Text>
                   </div>
-                  <div className={clsx('w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0', {
-                    'bg-blue-600 border-blue-600': vpIncluded,
-                    'border-gray-300': !vpIncluded,
-                  })}>
-                    {vpIncluded && <Check size={10} className="text-white" />}
+                  <div
+                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                    style={{ background: vpIncluded ? '#2563EB' : 'transparent', borderColor: vpIncluded ? '#2563EB' : '#CBD5E1' }}
+                  >
+                    {vpIncluded && <Check size={10} color="#fff" />}
                   </div>
                 </button>
               </CardBody>
@@ -207,7 +234,7 @@ export default function BookingFlow() {
             <Card>
               <CardHeader>
                 <CardTitle>Available Windows</CardTitle>
-                <span className="text-[11px] text-gray-500">Based on all selected attendees · next 5 business days</span>
+                <Text style={{ fontSize: 11, color: '#64748B', margin: 0 }}>Based on all selected attendees · next 5 business days</Text>
               </CardHeader>
               <CardBody>
                 {/* Day strip */}
@@ -216,13 +243,15 @@ export default function BookingFlow() {
                     <button
                       key={d.num}
                       onClick={() => setSelectedDay(i)}
-                      className={clsx('flex-1 text-center py-2 px-1 rounded-lg border-2 transition-colors', {
-                        'bg-blue-600 border-blue-600 text-white': selectedDay === i,
-                        'border-gray-200 hover:border-blue-200': selectedDay !== i,
-                      })}
+                      className="flex-1 text-center py-2 px-1 rounded-lg transition-colors"
+                      style={{
+                        border: `2px solid ${selectedDay === i ? '#2563EB' : '#E2E8F0'}`,
+                        background: selectedDay === i ? '#2563EB' : '#fff',
+                        cursor: 'pointer',
+                      }}
                     >
-                      <div className={clsx('text-[10px] uppercase font-bold tracking-wide', selectedDay === i ? 'text-blue-200' : 'text-gray-400')}>{d.name}</div>
-                      <div className={clsx('text-[18px] font-extrabold', selectedDay === i ? 'text-white' : 'text-gray-900')}>{d.num}</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: selectedDay === i ? '#BFDBFE' : '#94A3B8' }}>{d.name}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: selectedDay === i ? '#fff' : '#1A1D23' }}>{d.num}</div>
                     </button>
                   ))}
                 </div>
@@ -234,18 +263,23 @@ export default function BookingFlow() {
                       key={s.time}
                       disabled={s.taken}
                       onClick={() => !s.taken && setSelectedSlot(s.time)}
-                      className={clsx('py-2 text-center border-2 rounded-lg text-[13px] font-semibold transition-colors', {
-                        'bg-blue-600 border-blue-600 text-white': selectedSlot === s.time,
-                        'bg-gray-100 border-gray-200 text-gray-300 line-through cursor-not-allowed': s.taken,
-                        'border-gray-200 text-gray-700 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50': !s.taken && selectedSlot !== s.time,
-                      })}
+                      className="py-2 text-center rounded-lg transition-colors"
+                      style={{
+                        border: `2px solid ${selectedSlot === s.time ? '#2563EB' : s.taken ? '#E2E8F0' : '#E2E8F0'}`,
+                        background: selectedSlot === s.time ? '#2563EB' : s.taken ? '#F8FAFC' : '#fff',
+                        color: selectedSlot === s.time ? '#fff' : s.taken ? '#CBD5E1' : '#374151',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        textDecoration: s.taken ? 'line-through' : 'none',
+                        cursor: s.taken ? 'not-allowed' : 'pointer',
+                      }}
                     >
                       {s.time}
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11.5px] text-amber-800 flex gap-1.5">
+                <div className="mt-3 flex gap-1.5 px-3 py-2 rounded-lg" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', fontSize: 11.5, color: '#92400E' }}>
                   💡 Greyed-out slots are blocked for one or more attendees. The buyer will only see the white slots.
                 </div>
               </CardBody>
@@ -256,24 +290,28 @@ export default function BookingFlow() {
         {/* ─── STEP 3 ─── */}
         {step === 3 && (
           <>
-            <Card className="mb-4">
+            <Card style={{ marginBottom: 16 }}>
               <CardHeader>
-                <CardTitle className="text-emerald-600">✓ Link generated</CardTitle>
+                <CardTitle style={{ color: '#16A34A' }}>✓ Link generated</CardTitle>
               </CardHeader>
               <CardBody>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Booking Link</p>
-                <div className="flex items-center gap-2.5 bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 mb-4">
-                  <span className="text-[13px] text-blue-600 font-mono flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{bookingUrl}</span>
-                  <button
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Booking Link</Text>
+                <div className="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 mb-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <Text style={{ fontSize: 13, color: '#2563EB', fontFamily: 'var(--salt-typography-fontFamily-ptMono, PT Mono, monospace)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+                    {bookingUrl}
+                  </Text>
+                  <Button
+                    appearance="bordered"
+                    sentiment="neutral"
                     onClick={handleCopy}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-200 text-[12px] font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                    style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                    {copied ? <Check size={12} color="#16A34A" /> : <Copy size={12} />}
                     {copied ? 'Copied!' : 'Copy'}
-                  </button>
+                  </Button>
                 </div>
 
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">What this link does</p>
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>What this link does</Text>
                 <div className="flex flex-col gap-2 mb-4">
                   {[
                     ['📅', 'Shows only times when Marcus + Priya are both free'],
@@ -281,18 +319,18 @@ export default function BookingFlow() {
                     ['👥', 'Allows buyer to add their own colleagues on confirmation'],
                     ['📋', 'Logs activity in CRM automatically (P2)'],
                   ].map(([icon, text]) => (
-                    <div key={text} className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg text-[13.5px] text-gray-700">
-                      <span className="text-base">{icon}</span>{text}
+                    <div key={text} className="flex items-center gap-2.5 px-3.5 py-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: 13.5, color: '#374151' }}>
+                      <span style={{ fontSize: 16 }}>{icon}</span>{text}
                     </div>
                   ))}
                 </div>
 
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Share via</p>
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Share via</Text>
                 <div className="flex gap-2">
                   {['📧 Email', '💬 Slack', '🔗 CRM Activity'].map((label) => (
-                    <button key={label} className="px-3 py-1.5 border border-gray-200 rounded-lg text-[12px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                    <Button key={label} appearance="bordered" sentiment="neutral" style={{ fontSize: 12 }}>
                       {label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </CardBody>
@@ -304,17 +342,17 @@ export default function BookingFlow() {
               <CardBody>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Your Team</p>
+                    <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Your Team</Text>
                     <div className="flex flex-col gap-2">
                       {[
-                        { init: 'M', name: 'Marcus Chen', role: 'Account Executive', color: 'bg-blue-600', badge: <Badge variant="blue">You</Badge> },
-                        { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer', color: 'bg-purple-600', badge: <Badge variant="purple">SE</Badge> },
+                        { init: 'M', name: 'Marcus Chen', role: 'Account Executive', color: '#2563EB', badge: <Badge variant="blue">You</Badge> },
+                        { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer', color: '#7C3AED', badge: <Badge variant="purple">SE</Badge> },
                       ].map((a) => (
-                        <div key={a.name} className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 ${a.color}`}>{a.init}</div>
+                        <div key={a.name} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ background: a.color, fontSize: 10, fontWeight: 700 }}>{a.init}</div>
                           <div className="flex-1">
-                            <div className="text-[13px] font-bold text-gray-900">{a.name}</div>
-                            <div className="text-[11px] text-gray-500">{a.role}</div>
+                            <Text style={{ fontSize: 13, fontWeight: 700, color: '#1A1D23', margin: 0 }}>{a.name}</Text>
+                            <Text style={{ fontSize: 11, color: '#64748B', margin: 0 }}>{a.role}</Text>
                           </div>
                           {a.badge}
                         </div>
@@ -322,8 +360,8 @@ export default function BookingFlow() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Buyer Side</p>
-                    <div className="px-3 py-3 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-[13px] text-gray-400">
+                    <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Buyer Side</Text>
+                    <div className="px-3 py-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px dashed #CBD5E1', fontSize: 13, color: '#94A3B8' }}>
                       Awaiting buyer to confirm &amp; add colleagues
                     </div>
                   </div>
@@ -333,31 +371,29 @@ export default function BookingFlow() {
           </>
         )}
 
-        {/* Nav buttons */}
+        {/* Navigation buttons */}
         <div className="flex justify-end gap-2 mt-4">
           {step === 1 && (
             <>
-              <Link href="/dashboard" className="px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
+              <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                <Button appearance="bordered" sentiment="neutral" style={{ fontSize: 13 }}>Cancel</Button>
               </Link>
-              <button onClick={() => setStep(2)} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold transition-colors">
+              <Button appearance="solid" sentiment="accented" onClick={() => setStep(2)} style={{ fontSize: 13 }}>
                 Next: Select Team →
-              </button>
+              </Button>
             </>
           )}
           {step === 2 && (
             <>
-              <button onClick={() => setStep(1)} className="px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                ← Back
-              </button>
-              <button onClick={() => setStep(3)} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold transition-colors">
+              <Button appearance="bordered" sentiment="neutral" onClick={() => setStep(1)} style={{ fontSize: 13 }}>← Back</Button>
+              <Button appearance="solid" sentiment="accented" onClick={() => setStep(3)} style={{ fontSize: 13 }}>
                 Generate Booking Link →
-              </button>
+              </Button>
             </>
           )}
           {step === 3 && (
-            <Link href="/dashboard" className="px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-              ← Back to Dashboard
+            <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+              <Button appearance="bordered" sentiment="neutral" style={{ fontSize: 13 }}>← Back to Dashboard</Button>
             </Link>
           )}
         </div>

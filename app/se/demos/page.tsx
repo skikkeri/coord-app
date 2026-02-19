@@ -1,4 +1,6 @@
+'use client';
 import Link from 'next/link';
+import { Text, Button } from '@salt-ds/core';
 import { Card, CardHeader, CardTitle } from '@/app/components/Card';
 import { Badge } from '@/app/components/Badge';
 
@@ -12,41 +14,58 @@ const demos = [
 export default function SEDemosPage() {
   return (
     <>
-      <div className="flex items-center gap-3 px-7 h-14 bg-white border-b border-gray-200 flex-shrink-0">
-        <h1 className="text-base font-bold text-gray-900 flex-1">My Upcoming Demos</h1>
-        <span className="text-[13px] text-gray-400">4 demos in the next 7 days</span>
-        <Link href="/se/availability" className="px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-          Edit Availability
+      <div
+        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
+      >
+        <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>My Upcoming Demos</Text>
+        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>4 demos in the next 7 days</Text>
+        <Link href="/se/availability" style={{ textDecoration: 'none' }}>
+          <Button appearance="bordered" sentiment="neutral" style={{ fontSize: 13 }}>
+            Edit Availability
+          </Button>
         </Link>
       </div>
 
       <div className="flex-1 p-7">
         <div className="grid grid-cols-2 gap-5">
-          {/* Demo list */}
           <Card>
             <CardHeader><CardTitle>This Week</CardTitle></CardHeader>
             <div>
               {demos.map((d, i) => (
-                <div key={i} className="flex gap-3.5 px-4 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                  <div className="text-center min-w-[44px] flex-shrink-0">
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{d.month}</div>
-                    <div className="text-[24px] font-extrabold text-gray-900 leading-none">{d.day}</div>
+                <div
+                  key={i}
+                  className="flex gap-3.5 px-4 py-3.5 transition-colors"
+                  style={{ borderBottom: i < demos.length - 1 ? '1px solid #F8FAFC' : 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '')}
+                >
+                  <div className="text-center flex-shrink-0" style={{ minWidth: 44 }}>
+                    <Text style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', margin: 0 }}>{d.month}</Text>
+                    <Text style={{ fontSize: 24, fontWeight: 800, color: '#1A1D23', lineHeight: 1, margin: 0 }}>{d.day}</Text>
                   </div>
                   <div className="flex-1">
-                    <div className="text-[14px] font-bold text-gray-900">{d.company}</div>
-                    <div className="text-[12px] text-gray-500">Booked by {d.ae} · {d.type}</div>
-                    <div className="text-[12px] text-gray-700 mt-0.5">{d.time} · {d.attendees} attendees</div>
-                    {d.briefReady ? (
-                      <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700">
-                        📋 Brief ready
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">
-                        ⏳ Brief pending
-                      </span>
-                    )}
+                    <Text style={{ fontSize: 14, fontWeight: 700, color: '#1A1D23', margin: 0 }}>{d.company}</Text>
+                    <Text style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Booked by {d.ae} · {d.type}</Text>
+                    <Text style={{ fontSize: 12, color: '#374151', margin: '2px 0 0' }}>{d.time} · {d.attendees} attendees</Text>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        marginTop: 4,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: d.briefReady ? '#EDE9FE' : '#FEF3C7',
+                        color: d.briefReady ? '#5B21B6' : '#92400E',
+                      }}
+                    >
+                      {d.briefReady ? '📋 Brief ready' : '⏳ Brief pending'}
+                    </span>
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 pt-1">
                     <Badge variant={d.status === 'confirmed' ? 'green' : 'amber'}>
                       {d.status === 'confirmed' ? 'Confirmed' : 'Pending'}
                     </Badge>
@@ -56,26 +75,28 @@ export default function SEDemosPage() {
             </div>
           </Card>
 
-          {/* Stats */}
           <div className="flex flex-col gap-4">
             <Card>
               <CardHeader><CardTitle>This Week at a Glance</CardTitle></CardHeader>
               <div className="p-4 grid grid-cols-2 gap-2.5">
                 {[
-                  { label: 'Demos booked', value: '4', color: 'text-gray-900' },
-                  { label: 'Avg lead time', value: '31h', color: 'text-emerald-600' },
-                  { label: 'Briefs sent', value: '3', color: 'text-gray-900' },
-                  { label: 'Prep blocks', value: '4', color: 'text-gray-900' },
+                  { label: 'Demos booked', value: '4', color: '#1A1D23' },
+                  { label: 'Avg lead time', value: '31h', color: '#16A34A' },
+                  { label: 'Briefs sent', value: '3', color: '#1A1D23' },
+                  { label: 'Prep blocks', value: '4', color: '#1A1D23' },
                 ].map((s) => (
-                  <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{s.label}</div>
-                    <div className={`text-[22px] font-extrabold ${s.color} mt-1 leading-none`}>{s.value}</div>
+                  <div
+                    key={s.label}
+                    style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#64748B', margin: 0 }}>{s.label}</Text>
+                    <Text style={{ fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1.1, margin: '4px 0 0' }}>{s.value}</Text>
                   </div>
                 ))}
               </div>
             </Card>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11.5px] text-amber-800 flex gap-1.5">
+            <div className="flex gap-1.5 px-3 py-2 rounded-lg" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', fontSize: 11.5, color: '#92400E' }}>
               💡 Priya can see her entire week, with lead time, brief status, and confirmation status — all without chasing the AE on Slack.
             </div>
           </div>

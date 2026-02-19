@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
+/* Coord brand tokens — complement Salt DS */
 :root {
-  --background: #F0F2F5;
-  --foreground: #1A1D23;
-  --sidebar: #1E2230;
-  --sidebar-border: #2D3348;
-  --primary: #2563EB;
-  --purple: #7C3AED;
-  --green: #059669;
+  --coord-sidebar-bg: #1E2230;
+  --coord-sidebar-border: #2D3348;
+  --coord-bg: #F0F2F5;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--coord-bg);
+  /* Salt DS sets font-family via --salt-typography-fontFamily-openSans */
 }
 
-/* Scrollbar */
+/* Thin scrollbars */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #3B4563; border-radius: 3px; }
+
+/* Salt overrides — keep our dark sidebar outside Salt's light theme */
+.coord-sidebar {
+  background: var(--coord-sidebar-bg);
+  border-right: 1px solid var(--coord-sidebar-border);
+}

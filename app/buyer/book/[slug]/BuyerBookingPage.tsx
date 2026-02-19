@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
+import { Text, Button, Input, FormField, FormFieldLabel, Spinner } from '@salt-ds/core';
 import { calDays } from '@/lib/mock-data';
-import clsx from 'clsx';
-import { Check, X, Loader2, AlertCircle } from 'lucide-react';
+import { Check, X, AlertCircle } from 'lucide-react';
 
 const buyerSlots = ['10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '3:30 PM', '4:00 PM'];
 
@@ -104,85 +104,83 @@ export default function BuyerBookingPage() {
     }
   }
 
+  // ── Shared topbar ──
+  const Topbar = () => (
+    <div className="flex items-center gap-3.5 px-7 h-14" style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+      <Text style={{ fontSize: 16, fontWeight: 800, color: '#1A1D23', margin: 0 }}>
+        ⚡ <span style={{ color: '#059669' }}>Coord</span>
+      </Text>
+      <div className="flex-1" />
+      <Text style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>Powered by Coord · Secure booking</Text>
+    </div>
+  );
+
   if (confirmed) {
     const day = calDays[selectedDay];
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
-        {/* Topbar */}
-        <div className="bg-white border-b border-gray-200 px-7 h-14 flex items-center gap-3.5">
-          <div className="text-[16px] font-extrabold text-gray-900">⚡ <span className="text-emerald-600">Coord</span></div>
-          <div className="flex-1" />
-          <div className="text-[12px] text-gray-400">Powered by Coord · Secure booking</div>
-        </div>
-
-        {/* Body */}
+      <div className="min-h-screen flex flex-col" style={{ background: '#F0F2F5' }}>
+        <Topbar />
         <div className="flex-1 flex items-start justify-center p-8">
-          <div className="bg-white border border-gray-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-sm">
-            {/* Confirmation hero */}
-            <div className="text-center px-7 py-7 border-b border-emerald-100" style={{ background: 'linear-gradient(135deg, #ECFDF5, #F0FDF4)' }}>
-              <div className="w-14 h-14 rounded-full bg-emerald-600 flex items-center justify-center mx-auto mb-3 text-2xl">✓</div>
-              <div className="text-[20px] font-extrabold text-emerald-900">You're booked!</div>
-              <div className="text-[14px] text-emerald-600 mt-1">A calendar invite has been sent to {buyerEmail}</div>
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, width: '100%', maxWidth: 640, overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+            {/* Hero */}
+            <div className="text-center px-7 py-7" style={{ background: 'linear-gradient(135deg, #ECFDF5, #F0FDF4)', borderBottom: '1px solid #D1FAE5' }}>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: '#059669', fontSize: 24 }}>✓</div>
+              <Text styleAs="h3" style={{ color: '#064E3B', fontWeight: 800, margin: 0 }}>You're booked!</Text>
+              <Text style={{ fontSize: 14, color: '#059669', margin: '4px 0 0' }}>A calendar invite has been sent to {buyerEmail}</Text>
             </div>
 
             <div className="p-6">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Meeting Details</p>
-              <div className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
-                <span className="text-base">📅</span>
-                <div><strong>{day.name} {day.num} Feb 2026</strong> · {selectedSlot} – 45 min (GMT)</div>
-              </div>
-              <div className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
-                <span className="text-base">🖥️</span>
-                <div>
-                  Google Meet ·{' '}
-                  {meetLink
-                    ? <a href={meetLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">Open meeting link</a>
-                    : 'Link in your calendar invite'}
+              <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 12, display: 'block' }}>Meeting Details</Text>
+              {[
+                { icon: '📅', content: <><strong>{day.name} {day.num} Feb 2026</strong> · {selectedSlot} – 45 min (GMT)</> },
+                { icon: '🖥️', content: <>Google Meet · {meetLink ? <a href={meetLink} target="_blank" rel="noreferrer" style={{ color: '#2563EB', textDecoration: 'underline' }}>Open meeting link</a> : 'Link in your calendar invite'}</> },
+                { icon: '⏱️', content: <>45 minutes · Technical Demo · {buyerCompany}</> },
+              ].map(({ icon, content }, idx) => (
+                <div key={idx} className="flex items-center gap-2.5 px-3.5 py-3 rounded-lg mb-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: 13.5, color: '#374151' }}>
+                  <span style={{ fontSize: 16 }}>{icon}</span><div>{content}</div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2.5 px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-2 text-[13.5px] text-gray-700">
-                <span className="text-base">⏱️</span>
-                <div>45 minutes · Technical Demo · {buyerCompany}</div>
-              </div>
+              ))}
 
-              <hr className="my-4 border-gray-100" />
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Who you'll meet</p>
+              <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #F1F5F9' }} />
+              <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 12, display: 'block' }}>Who you'll meet</Text>
               <div className="flex flex-col gap-2 mb-4">
                 {[
-                  { init: 'M', name: 'Marcus Chen', role: 'Account Executive · Will walk you through the platform', color: 'bg-blue-600' },
-                  { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer · Will handle all technical questions', color: 'bg-purple-600' },
+                  { init: 'M', name: 'Marcus Chen', role: 'Account Executive · Will walk you through the platform', bg: '#2563EB' },
+                  { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer · Will handle all technical questions', bg: '#7C3AED' },
                 ].map((a) => (
-                  <div key={a.name} className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 ${a.color}`}>{a.init}</div>
-                    <div><div className="text-[13px] font-bold text-gray-900">{a.name}</div><div className="text-[11px] text-gray-500">{a.role}</div></div>
+                  <div key={a.name} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ background: a.bg, fontSize: 10, fontWeight: 700 }}>{a.init}</div>
+                    <div>
+                      <Text style={{ fontSize: 13, fontWeight: 700, color: '#1A1D23', margin: 0 }}>{a.name}</Text>
+                      <Text style={{ fontSize: 11, color: '#64748B', margin: 0 }}>{a.role}</Text>
+                    </div>
                   </div>
                 ))}
               </div>
 
               {/* Add colleagues */}
-              <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4">
-                <div className="text-[14px] font-bold text-blue-800 mb-1">👥 Bring your team</div>
-                <div className="text-[12px] text-blue-600 mb-3">Add colleagues — they'll get their own calendar invite.</div>
+              <div className="rounded-lg p-4" style={{ background: '#EFF6FF', border: '2px dashed #93C5FD' }}>
+                <Text style={{ fontSize: 14, fontWeight: 700, color: '#1E40AF', margin: '0 0 4px' }}>👥 Bring your team</Text>
+                <Text style={{ fontSize: 12, color: '#3B82F6', margin: '0 0 12px' }}>Add colleagues — they'll get their own calendar invite.</Text>
                 <div className="flex gap-2 mb-2.5">
                   <input
                     type="email"
                     value={colleagueEmail}
                     onChange={e => setColleagueEmail(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addColleague()}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-blue-500"
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addColleague()}
                     placeholder="colleague@company.com"
+                    className="px-3 py-2 rounded-lg"
+                    style={{ flex: 1, border: '1px solid #CBD5E1', fontSize: 13.5, outline: 'none' }}
                   />
-                  <button onClick={addColleague} className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold transition-colors">
-                    Add
-                  </button>
+                  <Button appearance="solid" sentiment="accented" onClick={addColleague} style={{ fontSize: 12 }}>Add</Button>
                 </div>
                 {colleagues.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="text-[12px] text-gray-400">Added:</span>
+                    <Text style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>Added:</Text>
                     {colleagues.map((c, i) => (
-                      <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-semibold">
+                      <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: '#DBEAFE', color: '#1E40AF', fontSize: 11, fontWeight: 600 }}>
                         {c.email}
-                        <button onClick={() => removeColleague(i)} className="text-blue-400 hover:text-blue-700">
+                        <button onClick={() => removeColleague(i)} style={{ color: '#93C5FD', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
                           <X size={10} />
                         </button>
                       </span>
@@ -191,7 +189,7 @@ export default function BuyerBookingPage() {
                 )}
               </div>
 
-              <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11.5px] text-amber-800 flex gap-1.5">
+              <div className="mt-4 flex gap-1.5 px-3 py-2 rounded-lg" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', fontSize: 11.5, color: '#92400E' }}>
                 💡 Each colleague receives a personalised invite — no vendor involvement needed.
               </div>
             </div>
@@ -202,31 +200,24 @@ export default function BuyerBookingPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
-      {/* Topbar */}
-      <div className="bg-white border-b border-gray-200 px-7 h-14 flex items-center gap-3.5">
-        <div className="text-[16px] font-extrabold text-gray-900">⚡ <span className="text-emerald-600">Coord</span></div>
-        <div className="flex-1" />
-        <div className="text-[12px] text-gray-400">Powered by Coord · Secure booking</div>
-      </div>
-
-      {/* Body */}
+    <div className="min-h-screen flex flex-col" style={{ background: '#F0F2F5' }}>
+      <Topbar />
       <div className="flex-1 flex items-start justify-center p-8">
-        <div className="bg-white border border-gray-200 rounded-xl w-full max-w-3xl overflow-hidden shadow-sm">
-          {/* Header */}
-          <div className="px-7 py-6 text-white" style={{ background: '#059669' }}>
-            <h2 className="text-[20px] font-extrabold mb-1">Book a Demo with Veritas Cloud Team</h2>
-            <p className="text-[13px] opacity-85">Technical Demo · 45 minutes · Google Meet</p>
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, width: '100%', maxWidth: 768, overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          {/* Green header */}
+          <div className="px-7 py-6" style={{ background: '#059669' }}>
+            <Text styleAs="h3" style={{ color: '#fff', fontWeight: 800, margin: '0 0 4px' }}>Book a Demo with Veritas Cloud Team</Text>
+            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: 0 }}>Technical Demo · 45 minutes · Google Meet</Text>
             <div className="flex gap-2.5 mt-3.5">
               {[
-                { init: 'M', name: 'Marcus Chen', role: 'Account Executive', color: 'bg-blue-500' },
-                { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer', color: 'bg-purple-600' },
+                { init: 'M', name: 'Marcus Chen', role: 'Account Executive', bg: '#2563EB' },
+                { init: 'P', name: 'Priya Sharma', role: 'Sales Engineer', bg: '#7C3AED' },
               ].map((a) => (
-                <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1" style={{ background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.3)' }}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 ${a.color}`}>{a.init}</div>
+                <div key={a.name} className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ background: a.bg, fontSize: 10, fontWeight: 700 }}>{a.init}</div>
                   <div>
-                    <div className="text-[13px] font-bold text-white">{a.name}</div>
-                    <div className="text-[11px]" style={{ color: 'rgba(255,255,255,.7)' }}>{a.role}</div>
+                    <Text style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{a.name}</Text>
+                    <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>{a.role}</Text>
                   </div>
                 </div>
               ))}
@@ -236,104 +227,109 @@ export default function BuyerBookingPage() {
           {/* Content */}
           <div className="p-6">
             <div className="grid grid-cols-2 gap-7">
-              {/* Left: calendar + slots */}
+              {/* Left: date + slots */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Select a date</p>
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>Select a date</Text>
                 <div className="flex gap-1.5 mb-5">
                   {calDays.map((d, i) => (
                     <button
                       key={d.num}
                       onClick={() => setSelectedDay(i)}
-                      className={clsx('flex-1 text-center py-2 px-1 rounded-lg border-2 transition-colors', {
-                        'bg-emerald-600 border-emerald-600 text-white': selectedDay === i,
-                        'border-gray-200 hover:border-emerald-300': selectedDay !== i,
-                      })}
+                      className="flex-1 text-center py-2 px-1 rounded-lg transition-colors"
+                      style={{
+                        border: `2px solid ${selectedDay === i ? '#059669' : '#E2E8F0'}`,
+                        background: selectedDay === i ? '#059669' : '#fff',
+                        cursor: 'pointer',
+                      }}
                     >
-                      <div className={clsx('text-[10px] uppercase font-bold tracking-wide', selectedDay === i ? 'text-emerald-200' : 'text-gray-400')}>{d.name}</div>
-                      <div className={clsx('text-[18px] font-extrabold', selectedDay === i ? 'text-white' : 'text-gray-900')}>{d.num}</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: selectedDay === i ? '#A7F3D0' : '#94A3B8' }}>{d.name}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: selectedDay === i ? '#fff' : '#1A1D23' }}>{d.num}</div>
                     </button>
                   ))}
                 </div>
 
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Available times — {calDays[selectedDay].name} {calDays[selectedDay].num} Feb</p>
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 8, display: 'block' }}>
+                  Available times — {calDays[selectedDay].name} {calDays[selectedDay].num} Feb
+                </Text>
                 <div className="grid grid-cols-3 gap-2">
                   {buyerSlots.map((s) => (
                     <button
                       key={s}
                       onClick={() => setSelectedSlot(s)}
-                      className={clsx('py-2 text-center border-2 rounded-lg text-[13px] font-semibold transition-colors', {
-                        'bg-emerald-600 border-emerald-600 text-white': selectedSlot === s,
-                        'border-gray-200 text-gray-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50': selectedSlot !== s,
-                      })}
+                      className="py-2 text-center rounded-lg transition-colors"
+                      style={{
+                        border: `2px solid ${selectedSlot === s ? '#059669' : '#E2E8F0'}`,
+                        background: selectedSlot === s ? '#059669' : '#fff',
+                        color: selectedSlot === s ? '#fff' : '#374151',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
                     >
                       {s}
                     </button>
                   ))}
                 </div>
-                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11.5px] text-amber-800 flex gap-1.5">
+                <div className="mt-3 flex gap-1.5 px-3 py-2 rounded-lg" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', fontSize: 11.5, color: '#92400E' }}>
                   💡 All times shown are when both Marcus and Priya are free — no back-and-forth needed.
                 </div>
               </div>
 
               {/* Right: form */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Your details</p>
+                <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94A3B8', marginBottom: 12, display: 'block' }}>Your details</Text>
                 <div className="flex flex-col gap-3">
-                  <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={buyerName}
-                      onChange={e => setBuyerName(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Work email</label>
-                    <input
-                      type="email"
-                      value={buyerEmail}
-                      onChange={e => setBuyerEmail(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Company</label>
-                    <input
-                      type="text"
-                      value={buyerCompany}
-                      onChange={e => setBuyerCompany(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13.5px] bg-gray-50 text-gray-700 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wide text-gray-600 mb-1">Anything to prepare? (optional)</label>
-                    <input
-                      type="text"
-                      value={notes}
-                      onChange={e => setNotes(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-[13.5px] focus:outline-none focus:border-emerald-500"
-                      placeholder="e.g. We'll have our IT lead joining"
-                    />
-                  </div>
+                  {[
+                    { label: 'Name', type: 'text', value: buyerName, onChange: setBuyerName, placeholder: '' },
+                    { label: 'Work email', type: 'email', value: buyerEmail, onChange: setBuyerEmail, placeholder: '' },
+                    { label: 'Company', type: 'text', value: buyerCompany, onChange: setBuyerCompany, placeholder: '' },
+                    { label: 'Anything to prepare? (optional)', type: 'text', value: notes, onChange: setNotes, placeholder: "e.g. We'll have our IT lead joining" },
+                  ].map(({ label, type, value, onChange, placeholder }) => (
+                    <div key={label}>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.07em', color: '#475569', marginBottom: 6 }}>
+                        {label}
+                      </label>
+                      <input
+                        type={type}
+                        value={value}
+                        onChange={e => onChange(e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full px-3 py-2.5 rounded-lg"
+                        style={{ border: '1px solid #CBD5E1', fontSize: 13.5, outline: 'none', background: '#F8FAFC', color: '#374151', fontFamily: 'inherit' }}
+                      />
+                    </div>
+                  ))}
 
                   {error && (
-                    <div className="flex items-start gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-[12px] text-red-700">
-                      <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg" style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', fontSize: 12, color: '#DC2626' }}>
+                      <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
                       {error}
                     </div>
                   )}
 
-                  <button
+                  <Button
+                    appearance="solid"
+                    sentiment="accented"
                     onClick={handleConfirm}
                     disabled={loading || !buyerEmail || !buyerName}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-bold transition-colors mt-1"
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      fontSize: 14,
+                      fontWeight: 700,
+                      background: '#059669',
+                      marginTop: 4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '10px 0',
+                    }}
                   >
                     {loading
-                      ? <><Loader2 size={16} className="animate-spin" /> Creating event…</>
+                      ? <><Spinner size="small" aria-label="Creating event" /> Creating event…</>
                       : <><Check size={16} /> Confirm — {calDays[selectedDay].name} {calDays[selectedDay].num} Feb at {selectedSlot} →</>
                     }
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

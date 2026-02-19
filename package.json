@@ -10,6 +10,12 @@
   },
   "dependencies": {
     "@auth/core": "^0.41.0",
+    "@fontsource/open-sans": "^5.2.7",
+    "@fontsource/pt-mono": "^5.2.8",
+    "@salt-ds/core": "^1.57.0",
+    "@salt-ds/icons": "^1.17.1",
+    "@salt-ds/lab": "^1.0.0-alpha.86",
+    "@salt-ds/theme": "^1.40.0",
     "clsx": "^2.1.1",
     "googleapis": "^171.4.0",
     "lucide-react": "^0.574.0",

@@ -1,14 +1,16 @@
 'use client';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Calendar, LogOut, RefreshCw } from 'lucide-react';
+import { Button, Spinner, Tooltip } from '@salt-ds/core';
+import { Calendar, LogOut } from 'lucide-react';
 
 export function CalendarConnect() {
   const { data: session, status } = useSession();
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-[12px]">
-        <RefreshCw size={13} className="animate-spin" /> Connecting…
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: '#F1F5F9', color: '#64748B', fontSize: 12 }}>
+        <Spinner size="small" aria-label="Connecting" />
+        <span>Connecting…</span>
       </div>
     );
   }
@@ -16,29 +18,38 @@ export function CalendarConnect() {
   if (session) {
     return (
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 text-green-700 text-[12px] font-semibold">
+        <div
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+          style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: 12, fontWeight: 600 }}
+        >
           <Calendar size={13} />
           <span>Google Calendar connected</span>
-          <span className="text-green-500 text-[10px]">({session.user?.email})</span>
+          <span style={{ color: '#4ADE80', fontSize: 10 }}>({session.user?.email})</span>
         </div>
-        <button
-          onClick={() => signOut()}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          title="Disconnect"
-        >
-          <LogOut size={13} />
-        </button>
+        <Tooltip content="Disconnect Google Calendar" placement="bottom">
+          <Button
+            appearance="transparent"
+            sentiment="neutral"
+            onClick={() => signOut()}
+            aria-label="Disconnect"
+            style={{ padding: '4px 6px', minWidth: 0 }}
+          >
+            <LogOut size={13} />
+          </Button>
+        </Tooltip>
       </div>
     );
   }
 
   return (
-    <button
+    <Button
+      appearance="solid"
+      sentiment="accented"
       onClick={() => signIn('google')}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold transition-colors"
+      style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
     >
       <Calendar size={13} />
       Connect Google Calendar
-    </button>
+    </Button>
   );
 }

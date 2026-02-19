@@ -1,8 +1,10 @@
+'use client';
 import Link from 'next/link';
 import { mockMeetings } from '@/lib/mock-data';
 import { Badge } from '../components/Badge';
 import { Card, CardHeader, CardTitle } from '../components/Card';
 import { CalendarConnect } from '../components/CalendarConnect';
+import { Text, Button, StackLayout, FlowLayout } from '@salt-ds/core';
 import { AlertTriangle } from 'lucide-react';
 
 const statusVariant = {
@@ -17,22 +19,27 @@ const statusLabel = {
   draft: 'Draft',
 };
 
-const dotColor = {
-  confirmed: 'bg-blue-600',
-  pending: 'bg-amber-500',
-  draft: 'bg-gray-400',
+const dotColor: Record<string, string> = {
+  confirmed: '#2563EB',
+  pending: '#F59E0B',
+  draft: '#94A3B8',
 };
 
 export default function DashboardPage() {
   return (
     <>
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-7 h-14 bg-white border-b border-gray-200 flex-shrink-0">
-        <h1 className="text-base font-bold text-gray-900 flex-1">Dashboard</h1>
-        <span className="text-[13px] text-gray-400">Wed 18 Feb, 2026</span>
+      <div
+        className="flex items-center gap-3 px-7 h-14 flex-shrink-0"
+        style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}
+      >
+        <Text styleAs="h4" style={{ margin: 0, fontWeight: 700, flex: 1 }}>Dashboard</Text>
+        <Text style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>Wed 18 Feb, 2026</Text>
         <CalendarConnect />
-        <Link href="/book" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold transition-colors">
-          + Book a Demo
+        <Link href="/book" style={{ textDecoration: 'none' }}>
+          <Button appearance="solid" sentiment="accented" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+            + Book a Demo
+          </Button>
         </Link>
       </div>
 
@@ -40,15 +47,30 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-4 gap-3.5 mb-5">
           {[
-            { label: 'Meetings this week', value: '7', delta: '↑ 2 vs last week', up: true },
-            { label: 'Awaiting confirmation', value: '3', delta: "Buyer hasn't picked yet", up: false },
-            { label: 'Active deals', value: '18', delta: '↑ 1 new this week', up: true },
-            { label: 'Avg. booking time', value: '4m', delta: '↓ from 42m manually', up: true },
+            { label: 'Meetings this week', value: '7', delta: '↑ 2 vs last week', positive: true },
+            { label: 'Awaiting confirmation', value: '3', delta: "Buyer hasn't picked yet", positive: false },
+            { label: 'Active deals', value: '18', delta: '↑ 1 new this week', positive: true },
+            { label: 'Avg. booking time', value: '4m', delta: '↓ from 42m manually', positive: true },
           ].map((s) => (
-            <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-4">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{s.label}</div>
-              <div className="text-[28px] font-extrabold text-gray-900 my-1 leading-none">{s.value}</div>
-              <div className={`text-[12px] ${s.up ? 'text-emerald-600' : 'text-red-500'}`}>{s.delta}</div>
+            <div
+              key={s.label}
+              style={{
+                background: '#fff',
+                border: '1px solid #E2E8F0',
+                borderRadius: 12,
+                padding: 16,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}
+            >
+              <Text style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#64748B', margin: 0 }}>
+                {s.label}
+              </Text>
+              <Text style={{ fontSize: 28, fontWeight: 800, color: '#1A1D23', lineHeight: 1.1, margin: '4px 0' }}>
+                {s.value}
+              </Text>
+              <Text style={{ fontSize: 12, color: s.positive ? '#16A34A' : '#DC2626', margin: 0 }}>
+                {s.delta}
+              </Text>
             </div>
           ))}
         </div>
@@ -58,34 +80,49 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Upcoming Meetings</CardTitle>
             <Badge variant="blue">7 scheduled</Badge>
-            <button className="text-[12px] px-3 py-1 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">Filter</button>
+            <Button appearance="bordered" sentiment="neutral" style={{ fontSize: 12, padding: '3px 10px' }}>
+              Filter
+            </Button>
           </CardHeader>
           <div>
             {mockMeetings.map((m) => (
               <Link
                 href={m.status === 'draft' ? '/book' : '#'}
                 key={m.id}
-                className="flex items-center gap-3.5 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                style={{ textDecoration: 'none' }}
               >
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor[m.status]}`} />
-                <div className="font-semibold text-[13.5px] text-gray-900 min-w-[160px]">{m.deal}</div>
-                <div className="text-[12px] text-gray-500 min-w-[110px]">{m.type}</div>
-                <div className="text-[12px] text-gray-700 min-w-[170px]">{m.date}</div>
-                <div className="flex items-center gap-1.5 text-[12px] text-gray-700 min-w-[110px]">
-                  {m.se ? (
-                    <>
-                      <div className="w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-bold text-white">P</div>
-                      {m.se}
-                    </>
-                  ) : (
-                    <span className="flex items-center gap-1 text-red-500 font-semibold text-[12px]">
-                      <AlertTriangle size={12} /> No SE yet
-                    </span>
-                  )}
-                </div>
-                <div className="text-[12px] text-gray-500 min-w-[80px]">{m.attendees} attendees</div>
-                <div className="ml-auto">
-                  <Badge variant={statusVariant[m.status]}>{statusLabel[m.status]}</Badge>
+                <div
+                  className="flex items-center gap-3.5 px-4 py-3 transition-colors cursor-pointer"
+                  style={{ borderBottom: '1px solid #F8FAFC' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '')}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: dotColor[m.status] }}
+                  />
+                  <Text style={{ fontWeight: 600, fontSize: 13.5, color: '#1A1D23', margin: 0, minWidth: 160 }}>{m.deal}</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B', margin: 0, minWidth: 110 }}>{m.type}</Text>
+                  <Text style={{ fontSize: 12, color: '#374151', margin: 0, minWidth: 170 }}>{m.date}</Text>
+                  <div className="flex items-center gap-1.5 min-w-[110px]">
+                    {m.se ? (
+                      <>
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                          style={{ background: '#7C3AED', fontSize: 10 }}
+                        >P</div>
+                        <Text style={{ fontSize: 12, color: '#374151', margin: 0 }}>{m.se}</Text>
+                      </>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: '#DC2626', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <AlertTriangle size={12} /> No SE yet
+                      </Text>
+                    )}
+                  </div>
+                  <Text style={{ fontSize: 12, color: '#64748B', margin: 0, minWidth: 80 }}>{m.attendees} attendees</Text>
+                  <div className="ml-auto">
+                    <Badge variant={statusVariant[m.status as keyof typeof statusVariant]}>{statusLabel[m.status as keyof typeof statusLabel]}</Badge>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -93,7 +130,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* Annotation */}
-        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11.5px] text-amber-800 flex gap-1.5">
+        <div
+          className="mt-4 flex gap-1.5 px-3 py-2 rounded-lg"
+          style={{ background: '#FFFBEB', border: '1px solid #FDE68A', fontSize: 11.5, color: '#92400E' }}
+        >
           💡 Deals without an SE or without buyer confirmation are flagged automatically. Marcus can see at a glance what needs attention.
         </div>
       </div>

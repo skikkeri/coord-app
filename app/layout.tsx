@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider } from "./components/SessionProvider";
+import { SaltAppProvider } from "./components/SaltProvider";
 
 export const metadata: Metadata = {
   title: "Coord — B2B Sales Scheduling",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <SessionProvider>{children}</SessionProvider>
+        <SaltAppProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </SaltAppProvider>
       </body>
     </html>
   );
