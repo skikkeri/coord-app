@@ -3,7 +3,7 @@
 **Domain:** B2B sales scheduling tool
 **App name:** Coord
 **Repository:** https://github.com/skikkeri/coord-app
-**Last updated:** 2026-02-19
+**Last updated:** 2026-02-20
 
 ---
 
@@ -938,6 +938,49 @@ This generic NextAuth error can mean several things. Diagnosis checklist in orde
 Planned: Connect GitHub repo (`skikkeri/coord-app`) to Vercel for automatic deployments:
 - `main` branch → production deployment
 - Pull requests → preview deployments (shareable URLs for testing flows)
+
+---
+
+# Analytics
+
+## Google Analytics 4
+
+Coord uses GA4 for pageview tracking across all 8 screens. Instrumentation is live on https://coord-app.vercel.app.
+
+**Measurement ID:** `G-JH1S424Q6S`
+**GA4 Dashboard:** https://analytics.google.com
+
+### Implementation
+
+| File | Role |
+|------|------|
+| `lib/gtag.ts` | Thin helpers: `pageview(url)` and `event(action, params)` |
+| `app/components/Analytics.tsx` | Client component — fires `pageview` on every SPA route change via `usePathname` + `useSearchParams` |
+| `app/layout.tsx` | Injects `gtag.js` script + init snippet using `next/script strategy="afterInteractive"` |
+
+GA4 scripts are only injected when `NEXT_PUBLIC_GA_ID` is set, so local dev without the var set is clean.
+
+### What's tracked automatically
+
+- **Page views** — every navigation across all 8 screens
+- **Session duration**, **bounce rate**, **traffic source**, **device/browser** — collected by GA4 natively
+
+### Adding custom events
+
+```ts
+import { event } from '@/lib/gtag';
+
+// Examples — add to any client component:
+event('booking_confirmed', { meeting_type: 'Technical Demo', duration_min: 45 });
+event('calendar_connected', { provider: 'google' });
+event('booking_link_copied', { deal_name: 'NorthStar Ops' });
+```
+
+### Environment variable
+
+| Variable | Value | Environments |
+|----------|-------|-------------|
+| `NEXT_PUBLIC_GA_ID` | `G-JH1S424Q6S` | Production, Preview, Development (Vercel) + `.env.local` |
 
 ---
 
