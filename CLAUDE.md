@@ -3,7 +3,7 @@
 **Domain:** B2B sales scheduling tool
 **App name:** Coord
 **Repository:** https://github.com/skikkeri/coord-app
-**Last updated:** 2026-02-20
+**Last updated:** 2026-02-21
 
 ---
 
@@ -629,6 +629,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 ```
 
 **`trustHost: true` is mandatory.** Without it NextAuth v5 beta throws `UntrustedHost` for every request on non-localhost domains, which surfaces as the generic `?error=Configuration` page. This is a known NextAuth v5 beta behaviour — it does not auto-detect Vercel/production environments.
+
+### Token Refresh Flow (Automatic)
+
+Google access tokens expire after ~1 hour. `lib/auth.ts` handles this silently via a `refreshGoogleToken()` helper called inside the `jwt()` callback:
+
+```
+Every useSession() / auth() call → jwt() callback runs
+     │
+     ├─ Is token.expiresAt still in the future (with 60s buffer)?
+     │    YES → return token unchanged
+     │
+     └─ NO (expired) → refreshGoogleToken(token)
+          │
+          ▼
+     POST https://oauth2.googleapis.com/token
+          └─ grant_type=refresh_token
+          └─ refresh_token=token.refreshToken
+          └─ client_id + client_secret
+          │
+          ▼
+     Google returns new access_token + expires_in
+          └─ token.accessToken  ← updated
+          └─ token.expiresAt    ← updated (now + expires_in seconds)
+          └─ token.refreshToken ← updated if Google issued a new one
+          │
+          ▼
+     API routes receive fresh accessToken transparently
+```
+
+**On refresh failure** (user revoked access, refresh token expired):
+- `token.error = 'RefreshAccessTokenError'` is set
+- `session.error` is exposed to the client
+- `CalendarConnect.tsx` detects this and shows "Session expired / Reconnect" UI
+- API routes return `401 Unauthorized` (no change needed — already handled)
 
 ---
 
