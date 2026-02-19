@@ -41,4 +41,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   // v5 reads AUTH_SECRET from env automatically; belt-and-suspenders fallback
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  // Required for NextAuth v5 beta on non-localhost hosts (e.g. Vercel)
+  trustHost: true,
 });
